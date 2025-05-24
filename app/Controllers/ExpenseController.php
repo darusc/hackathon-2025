@@ -128,13 +128,23 @@ class ExpenseController extends BaseController
 
     public function destroy(Request $request, Response $response, array $routeParams): Response
     {
-        // TODO: implement this action method to delete an existing expense
+        $expenseId = $routeParams['id'];
+        $userId = $_SESSION['user_id'];
 
-        // - load the expense to be edited by its ID (use route params to get it)
-        // - check that the logged-in user is the owner of the edited expense, and fail with 403 if not
-        // - call the repository method to delete the expense
-        // - redirect to the "expenses.index" page
+        $expense = $this->expenseService->findById((int)$expenseId);
 
-        return $response;
+        // Check if the expense exists
+        if($expense == null) {
+            return $response->withStatus(404);
+        }
+
+        // Check if the current user owns the expense to be deleted
+        if($expense->userId != $userId) {
+            return $response->withStatus(403);
+        }
+
+        $this->expenseService->delete((int)$expenseId);
+
+        return $response->withHeader('Location', '/expenses')->withStatus(302);
     }
 }

@@ -58,11 +58,9 @@
                     <td class="py-2 px-4">{{ expense.date|date('m/d/Y') }}</td>
                     <td class="py-2 px-4">{{ expense.category }}</td>
                     <td class="py-2 px-4">
-                        {# TODO: Configure the necessary href attribute #}
-                        <a href="#"
+                        <a href="/expenses/{{ expense.id }}/edit"
                            class="text-blue-500 hover:text-blue-400 mr-2">Edit</a>
-                        {# TODO: Configure the necessary form action #}
-                        <form action="#" method="POST" class="inline">
+                        <form action="/expenses/{{ expense.id }}/delete" method="POST" class="inline">
                             <button type="submit"
                                     class="text-red-500 hover:text-red-400">Delete
                             </button>

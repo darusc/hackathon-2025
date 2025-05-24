@@ -25,6 +25,10 @@ class ExpenseService
         private LoggerInterface $logger
     ) {}
 
+    public function findById(int $id): Expense|null {
+        return $this->expenses->find($id);
+    }
+
     public function list(int $userId, int $year, int $month, int $pageNumber, int $pageSize): array
     {
         $data = $this->expenses->findBy(
@@ -78,6 +82,10 @@ class ExpenseService
         string $category,
     ): void {
         // TODO: implement this to update expense entity, perform validation, and persist
+    }
+
+    public function delete(int $id): void {
+        $this->expenses->delete($id);
     }
 
     public function importFromCsv(User $user, UploadedFileInterface $csvFile): int
