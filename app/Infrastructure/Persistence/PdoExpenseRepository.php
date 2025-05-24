@@ -10,11 +10,15 @@ use App\Domain\Repository\ExpenseRepositoryInterface;
 use DateTimeImmutable;
 use Exception;
 use PDO;
+use Psr\Log\LoggerInterface;
+use Slim\Logger;
 
 class PdoExpenseRepository implements ExpenseRepositoryInterface
 {
     public function __construct(
         private readonly PDO $pdo,
+        private LoggerInterface $logger,
+
     ) {}
 
     /**
@@ -35,7 +39,15 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
 
     public function save(Expense $expense): void
     {
-        // TODO: Implement save() method.
+        $query = 'INSERT INTO expenses (user_id, date, category, amount_cents, description) VALUES (:user_id, :date, :category, :amount_cents, :description)';
+        $statement = $this->pdo->prepare($query);
+        $statement->execute([
+            'user_id' => $expense->userId,
+            'date' => $expense->date->format('c'),
+            'category' => $expense->category,
+            'amount_cents' => $expense->amountCents,
+            'description' => $expense->description,
+        ]);
     }
 
     public function delete(int $id): void
@@ -44,23 +56,67 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
         $statement->execute([$id]);
     }
 
+    /**
+     * @throws Exception
+     */
     public function findBy(array $criteria, int $from, int $limit): array
     {
-        // TODO: Implement findBy() method.
-        return [];
+        $query = 'SELECT * FROM expenses 
+                  WHERE user_id = :user_id AND strftime("%m", date) = :month AND strftime("%Y", date) = :year
+                  LIMIT :limit
+                  OFFSET :offset';
+
+        $statement = $this->pdo->prepare($query);
+        $statement->execute([
+            'user_id' => $criteria['user_id'],
+            'month' => str_pad((string)$criteria['month'], 2, '0', STR_PAD_LEFT), // pad the month because strftime result is "05"
+            'year' => $criteria['year'],
+            'limit' => $limit,
+            'offset' => $from
+        ]);
+
+        $data = $statement->fetchAll();
+
+        return array_map(function($entry) {
+            return $this->createExpenseFromData($entry);
+        }, $data);
     }
 
 
     public function countBy(array $criteria): int
     {
-        // TODO: Implement countBy() method.
-        return 0;
+        $query = 'SELECT COUNT(*) FROM expenses WHERE user_id = :user_id';
+        $params = ['user_id' => $criteria['user_id']];
+
+        if(array_key_exists('year', $criteria)) {
+            $query .= ' AND strftime("%Y", date) = :year';
+            $params['year'] = $criteria['year'];
+        }
+        if(array_key_exists('month', $criteria)) {
+            $query .= ' AND strftime("%m", date) = :month';
+            $params['month'] = str_pad((string)$criteria['month'], 2, '0', STR_PAD_LEFT);
+        }
+
+        $statement = $this->pdo->prepare($query);
+        $statement->execute($params);
+
+        $data = $statement->fetchColumn();
+
+        return (int)$data;
     }
 
-    public function listExpenditureYears(User $user): array
+    public function listExpenditureYears(int $userId): array
     {
-        // TODO: Implement listExpenditureYears() method.
-        return [];
+        $query = 'SELECT DISTINCT strftime("%Y", date) as year FROM expenses WHERE user_id = :user_id';
+
+        $statement = $this->pdo->prepare($query);
+        $statement->execute(['user_id' => $userId]);
+
+        $data = $statement->fetchAll();
+
+        return array_map(function($entry) {
+            return (int)$entry['year'];
+        }, $data);
     }
 
     public function sumAmountsByCategory(array $criteria): array

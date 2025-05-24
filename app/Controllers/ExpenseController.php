@@ -13,6 +13,8 @@ class ExpenseController extends BaseController
 {
     private const PAGE_SIZE = 20;
 
+    private const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
     public function __construct(
         Twig $view,
         private readonly ExpenseService $expenseService,
@@ -22,24 +24,27 @@ class ExpenseController extends BaseController
 
     public function index(Request $request, Response $response): Response
     {
-        // TODO: implement this action method to display the expenses page
-
-        // Hints:
-        // - use the session to get the current user ID
-        // - use the request query parameters to determine the page number and page size
-        // - use the expense service to fetch expenses for the current user
-
-        // parse request parameters
-        $userId = 1; // TODO: obtain logged-in user ID from session
+        // Parse request parameters
+        $userId = $_SESSION['user_id'];
         $page = (int)($request->getQueryParams()['page'] ?? 1);
         $pageSize = (int)($request->getQueryParams()['pageSize'] ?? self::PAGE_SIZE);
+        $year = (int)($request->getQueryParams()['year'] ?? date("Y"));
+        $month = (int)($request->getQueryParams()['month'] ?? date("m"));
 
-        $expenses = $this->expenseService->list($userId, $page, $pageSize);
+        $years = $this->expenseService->listExpenditureYears($userId);
+        $expenses = $this->expenseService->list($userId, $year, $month, $page, $pageSize);
+
+        $count = $this->expenseService->count(['user_id' => $userId, 'year' => $year, 'month' => $month]);
 
         return $this->render($response, 'expenses/index.twig', [
             'expenses' => $expenses,
             'page'     => $page,
             'pageSize' => $pageSize,
+            'years' => $years,
+            'months' => self::MONTHS,
+            'total' => $count,
+            'selectedYear' => $year,
+            'selectedMonth' => $month,
         ]);
     }
 
