@@ -7,7 +7,7 @@
             <label for="username" class="block text-gray-400 text-sm font-bold mb-2">Username</label>
             <input type="text" id="username" name="username" required value="{{ username|default('') }}"
                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-400 leading-tight focus:outline-none focus:shadow-outline">
-            {% if errors['username'] is defined %}
+            {% if errors['username'] %}
                 <span class="text-red-500">{{ errors['username'] }}</span>
             {% endif %}
         </div>
@@ -15,7 +15,7 @@
             <label for="password" class="block text-gray-400 text-sm font-bold mb-2">Password</label>
             <input type="password" id="password" name="password" required value="{{ password|default('') }}"
                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-400 leading-tight focus:outline-none focus:shadow-outline">
-            {% if errors['password'] is defined %}
+            {% if errors['password'] %}
                 <span class="text-red-500">{{ errors['password'] }}</span>
             {% endif %}
         </div>

@@ -23,7 +23,20 @@ class AuthController extends BaseController
     public function showRegister(Request $request, Response $response): Response
     {
         $this->logger->info('Register page requested');
-        return $this->render($response, 'auth/register.twig');
+
+        // Get previous filled credentials and possible error
+        $errors = $_SESSION['registerErrors'] ?? [];
+        $username = $_SESSION['username'] ?? null;
+        $password = $_SESSION['password'] ?? null;
+        unset($_SESSION['registerErrors']);
+        unset($_SESSION['username']);
+        unset($_SESSION['password']);
+
+        return $this->render($response, 'auth/register.twig', [
+            'username' => $username,
+            'password' => $password,
+            'errors' => $errors,
+        ]);
     }
 
     public function register(Request $request, Response $response): Response
@@ -34,9 +47,21 @@ class AuthController extends BaseController
 
         $result = $this->authService->register($username, $password);
 
-        if($result != null){
+        if($result == AuthService::SUCCESSS){
             return $response->withHeader('Location', '/login')->withStatus(302);
         } else {
+            // Pass the register error and the credentials to the register view through $_SESSION
+            $_SESSION['username'] = $username;
+            $_SESSION['password'] = $password;
+
+            // Build the error messages based on the error returned from authService
+            $_SESSION['registerErrors'] = [
+                'username' => $result == AuthService::USERNAME_ALREADY_EXISTS ? "Username already exists" :
+                             ($result == AuthService::USERNAME_TOO_SHORT ? "Username too short" : null),
+                'password' => $result == AuthService::PASSWORD_TOO_SHORT ? "Password too short" :
+                             ($result == AuthService::PASSWORD_NO_NUMBER ? "Password must contain at least 1 number" : null)
+            ];
+
             return $response->withHeader('Location', '/register')->withStatus(302);
         }
     }

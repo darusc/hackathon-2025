@@ -10,22 +10,32 @@ use Psr\Log\LoggerInterface;
 
 class AuthService
 {
+    public const SUCCESSS = 0;
+    public const INVALID_PASSWORD = 1;
+    public const INVALID_USERNAME = 2;
+    public const USERNAME_ALREADY_EXISTS = 3;
+    public const USERNAME_TOO_SHORT = 4;
+    public const PASSWORD_TOO_SHORT = 5;
+    public const PASSWORD_NO_NUMBER = 6;
+
     public function __construct(
         private readonly UserRepositoryInterface $users,
         private LoggerInterface $logger,
     ) {}
 
-    public function register(string $username, string $password): ?User
+    public function register(string $username, string $password): int
     {
         // Check if a user with the current username already exists
         $user = $this->users->findByUsername($username);
         if ($user != null) {
             $this->logger->alert("User '{$username}' already exists");
-            return null;
+            return self::USERNAME_ALREADY_EXISTS;
         }
 
-        if(!$this->validateCredentials($username, $password)) {
-            return null;
+        $err = $this->validateCredentials($username, $password);
+        if($err != self::SUCCESSS) {
+            $this->logger->alert("Credentials are invalid. ($err)");
+            return $err;
         }
 
         // Hash the password before storing it in the database
@@ -36,7 +46,7 @@ class AuthService
 
         $this->logger->alert("User '{$username}' has been created");
 
-        return $user;
+        return self::SUCCESSS;
     }
 
     public function attempt(string $username, string $password): bool
@@ -53,19 +63,20 @@ class AuthService
      * Username criteria: length >= 4 characters
      * Password criteria: length >= 8 characters + at least 1 number
      */
-    private function validateCredentials(string $username, string $password): bool {
-        // Check length
-        if(strlen($username) < 4 || strlen($password) < 8){
-            $this->logger->alert('Username or password is too short');
-            return false;
+    private function validateCredentials(string $username, string $password): int {
+        if(strlen($username) < 4){
+            return self::USERNAME_TOO_SHORT;
+        }
+
+        if(strlen($password) < 8){
+            return self::PASSWORD_TOO_SHORT;
         }
 
         // Check if password contains at least 1 number
         if(!preg_match("/\d/", $password)){
-            $this->logger->alert('Password must contain at least one number');
-            return false;
+            return self::PASSWORD_NO_NUMBER;
         }
 
-        return true;
+        return self::SUCCESSS;
     }
 }
