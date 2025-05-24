@@ -157,22 +157,45 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
         }, $data);
     }
 
-    public function sumAmountsByCategory(array $criteria): array
+    public function sumAmountsByCategory(int $userId, int $year, int $month, string $category): int
     {
-        // TODO: Implement sumAmountsByCategory() method.
-        return [];
+        $query = 'SELECT SUM(amount_cents) FROM expenses WHERE user_id = :user_id AND category = :category AND strftime("%Y", date) = :year AND strftime("%m", date) = :month';
+        $statement = $this->pdo->prepare($query);
+        $statement->execute([
+            'user_id' => $userId,
+            'year' => (string)$year,
+            'month' => str_pad((string)$month, 2, '0', STR_PAD_LEFT),
+            'category' => $category,
+        ]);
+
+        return $statement->fetchColumn() ?: 0;
     }
 
-    public function averageAmountsByCategory(array $criteria): array
+    public function averageAmountsByCategory(int $userId, int $year, int $month, string $category): float
     {
-        // TODO: Implement averageAmountsByCategory() method.
-        return [];
+        $query = 'SELECT AVG(amount_cents) FROM expenses WHERE user_id = :user_id AND category = :category AND strftime("%Y", date) = :year AND strftime("%m", date) = :month';
+        $statement = $this->pdo->prepare($query);
+        $statement->execute([
+            'user_id' => $userId,
+            'year' => (string)$year,
+            'month' => str_pad((string)$month, 2, '0', STR_PAD_LEFT),
+            'category' => $category,
+        ]);
+
+        return $statement->fetchColumn() ?: 0;
     }
 
-    public function sumAmounts(array $criteria): float
+    public function sumAmounts(int $userId, int $year, int $month): int
     {
-        // TODO: Implement sumAmounts() method.
-        return 0;
+        $query = 'SELECT SUM(amount_cents) FROM expenses WHERE user_id = :user_id AND strftime("%Y", date) = :year AND strftime("%m", date) = :month';
+        $statement = $this->pdo->prepare($query);
+        $statement->execute([
+            'user_id' => $userId,
+            'year' => (string)$year,
+            'month' => str_pad((string)$month, 2, '0', STR_PAD_LEFT),
+        ]);
+
+        return $statement->fetchColumn() ?: 0;
     }
 
     /**

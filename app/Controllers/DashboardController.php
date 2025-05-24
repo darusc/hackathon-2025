@@ -4,36 +4,50 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Domain\Service\AlertGenerator;
+use App\Domain\Service\ExpenseService;
+use App\Domain\Service\MonthlySummaryService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Views\Twig;
 
 class DashboardController extends BaseController
 {
+    private const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    private AlertGenerator $alertGenerator;
+
     public function __construct(
         Twig $view,
-        // TODO: add necessary services here and have them injected by the DI container
-    )
-    {
+        private ExpenseService $expenseService,
+        private MonthlySummaryService $monthlySummaryService
+    ) {
         parent::__construct($view);
+        $this->alertGenerator = new AlertGenerator($monthlySummaryService);
     }
 
     public function index(Request $request, Response $response): Response
     {
-        // TODO: parse the request parameters
-        // TODO: load the currently logged-in user
-        // TODO: get the list of available years for the year-month selector
-        // TODO: call service to generate the overspending alerts for current month
-        // TODO: call service to compute total expenditure per selected year/month
-        // TODO: call service to compute category totals per selected year/month
-        // TODO: call service to compute category averages per selected year/month
+        $userId = $_SESSION['user_id'];
+
+        $year = (int)($request->getQueryParams()['year'] ?? date("Y"));
+        $month = (int)($request->getQueryParams()['month'] ?? date("m"));
+
+        $years = $this->expenseService->listExpenditureYears($userId);
+
+        $alerts = $this->alertGenerator->generate($userId, $year, $month);
+        $totalExpenditure = $this->monthlySummaryService->computeTotalExpenditure($userId, $year, $month);
+        $totalsForCategories = $this->monthlySummaryService->computePerCategoryTotals($userId, $year, $month);
+        $averageForCategories = $this->monthlySummaryService->computePerCategoryAverages($userId, $year, $month);
 
         return $this->render($response, 'dashboard.twig', [
-
-            'alerts'                => [],
-            'totalForMonth'         => [],
-            'totalsForCategories'   => [],
-            'averagesForCategories' => [],
+            'months' => self::MONTHS,
+            'years' => $years,
+            'selectedMonth' => $month,
+            'selectedYear' => $year,
+            'totalExpenditure' => $totalExpenditure,
+            'alerts'                => $alerts,
+            'totalsForCategories'   => $totalsForCategories,
+            'averagesForCategories' => $averageForCategories
         ]);
     }
 }

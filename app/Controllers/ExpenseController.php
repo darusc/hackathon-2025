@@ -14,7 +14,6 @@ use Slim\Views\Twig;
 class ExpenseController extends BaseController
 {
     private const PAGE_SIZE = 20;
-
     private const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     public function __construct(

@@ -13,21 +13,41 @@ class MonthlySummaryService
         private readonly ExpenseRepositoryInterface $expenses,
     ) {}
 
-    public function computeTotalExpenditure(User $user, int $year, int $month): float
-    {
-        // TODO: compute expenses total for year-month for a given user
-        return 0;
+    public function computeTotalExpenditure(int $userId, int $year, int $month): float {
+        return $this->expenses->sumAmounts($userId, $year, $month);
     }
 
-    public function computePerCategoryTotals(User $user, int $year, int $month): array
-    {
-        // TODO: compute totals for year-month for a given user
-        return [];
+    public function computePerCategoryTotals(int $userId, int $year, int $month): array {
+        $categories = explode(",", $_ENV['CATEGORIES']);
+        $totals = [];
+
+        $total = $this->computeTotalExpenditure($userId, $year, $month);
+
+        foreach($categories as $category) {
+            $categoryTotal = $this->expenses->sumAmountsByCategory($userId, $year, $month, $category);
+            $totals[$category] = [
+                'value' => $categoryTotal,
+                'percentage' => $total != 0 ? $categoryTotal / $total * 100 : 0
+            ];
+        }
+
+        return $totals;
     }
 
-    public function computePerCategoryAverages(User $user, int $year, int $month): array
-    {
-        // TODO: compute averages for year-month for a given user
-        return [];
+    public function computePerCategoryAverages(int $userId, int $year, int $month): array {
+        $categories = explode(",", $_ENV['CATEGORIES']);
+        $averages = [];
+
+        $total = $this->computeTotalExpenditure($userId, $year, $month);
+
+        foreach($categories as $category) {
+            $categoryAverage = $this->expenses->averageAmountsByCategory($userId, $year, $month, $category);
+            $averages[$category] = [
+                'value' => $categoryAverage,
+                'percentage' => $total != 0 ? $categoryAverage / $total * 100 : 0
+            ];
+        }
+
+        return $averages;
     }
 }
