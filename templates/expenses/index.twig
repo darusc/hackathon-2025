@@ -75,17 +75,13 @@
         <div class="mt-1 flex justify-center">{{ min(page * pageSize, total) }} of {{ total }} item(s)</div>
         <div class="mt-1 flex justify-between">
             {% if total and page > 1 %}
-                {% set currentQuery = app.request.query.all ?: {} %}
-                {% set query = currentQuery | merge({'page': page - 1}) %}
-                <a href="{{ app.request.path ~ '?' ~ query | url_encode}}" class="text-blue-500 hover:text-blue-400">Previous</a>
+                <a href="{{ previousPageUrl }}" class="text-blue-500 hover:text-blue-400">Previous</a>
             {% else %}
                 <span></span>
             {% endif %}
 
             {% if min(page * pageSize, total) < total  %}
-                {% set currentQuery = app.request.query.all ?: {} %}
-                {% set query = currentQuery | merge({'page': page + 1}) %}
-                <a href="{{ app.request.path ~ '?' ~ query | url_encode}}" class="text-blue-500 hover:text-blue-400">Next</a>
+                <a href="{{ nextPageUrl }}" class="text-blue-500 hover:text-blue-400">Next</a>
             {% endif %}
         </div>
     </section>

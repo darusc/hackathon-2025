@@ -47,6 +47,8 @@ class ExpenseController extends BaseController
             'total' => $count,
             'selectedYear' => $year,
             'selectedMonth' => $month,
+            'nextPageUrl' => $this->buildPageUrl($page + 1),
+            'previousPageUrl' => $this->buildPageUrl($page - 1),
         ]);
     }
 
@@ -203,5 +205,17 @@ class ExpenseController extends BaseController
         $this->logger->info("[EXPENSES IMPORT] Imported $rows rows");
 
         return $response->withHeader('Location', '/expenses')->withStatus(302);
+    }
+
+    /**
+     * Build the url for the given page.
+     * Takes into account existing query params.
+     */
+    private function buildPageUrl(int $page): string {
+        $params = $_GET;
+        $baseurl = strtok($_SERVER['REQUEST_URI'], "?");
+
+        $params['page'] = $page;
+        return $baseurl . '?' . http_build_query($params);
     }
 }
