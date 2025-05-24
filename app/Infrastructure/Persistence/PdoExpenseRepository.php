@@ -17,7 +17,6 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
 {
     public function __construct(
         private readonly PDO $pdo,
-        private LoggerInterface $logger,
     ) {}
 
     /**
@@ -42,6 +41,19 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
         $statement = $this->pdo->prepare($query);
         $statement->execute([
             'user_id' => $expense->userId,
+            'date' => $expense->date->format('c'),
+            'category' => $expense->category,
+            'amount_cents' => $expense->amountCents,
+            'description' => $expense->description,
+        ]);
+    }
+
+    public function update(Expense $expense): void
+    {
+        $query = 'UPDATE expenses SET date = :date, category = :category, amount_cents = :amount_cents, description = :description WHERE id = :id';
+        $statement = $this->pdo->prepare($query);
+        $statement->execute([
+            'id' => $expense->id,
             'date' => $expense->date->format('c'),
             'category' => $expense->category,
             'amount_cents' => $expense->amountCents,

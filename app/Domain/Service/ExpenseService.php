@@ -75,13 +75,25 @@ class ExpenseService
     }
 
     public function update(
-        Expense $expense,
+        int $id,
+        int $userId,
         float $amount,
         string $description,
         DateTimeImmutable $date,
         string $category,
-    ): void {
-        // TODO: implement this to update expense entity, perform validation, and persist
+    ): int {
+        $result = $this->validateData($date, $category, $amount, $description);
+        if($result != self::SUCCESS) {
+            $this->logger->info("[EXPENSE UPDATE] Expense $id update failed. ($result)");
+            return $result;
+        }
+
+        $expense = new Expense($id, $userId, $date, $category, (int)($amount * 100), $description);
+        $this->expenses->update($expense);
+
+        $this->logger->info("[EXPENSE UPDATE] Expense $id updated");
+
+        return self::SUCCESS;
     }
 
     public function delete(int $id): void {

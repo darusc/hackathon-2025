@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Domain\Service\ExpenseService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Log\LoggerInterface;
 use Slim\Views\Twig;
 
 class ExpenseController extends BaseController
@@ -18,6 +19,7 @@ class ExpenseController extends BaseController
     public function __construct(
         Twig $view,
         private readonly ExpenseService $expenseService,
+        private LoggerInterface $logger
     ) {
         parent::__construct($view);
     }
@@ -99,31 +101,61 @@ class ExpenseController extends BaseController
 
     public function edit(Request $request, Response $response, array $routeParams): Response
     {
-        // TODO: implement this action method to display the edit expense page
+        $categories = explode(",", $_ENV['CATEGORIES']);
 
-        // Hints:
-        // - obtain the list of available categories from configuration and pass to the view
-        // - load the expense to be edited by its ID (use route params to get it)
-        // - check that the logged-in user is the owner of the edited expense, and fail with 403 if not
+        $expenseId = $routeParams['id'];
+        $expense = $this->expenseService->findById((int)$expenseId);
 
-        $expense = ['id' => 1];
+        if($expense == null) {
+            $this->logger->info("[EXPENSE EDIT] Expense '{$expenseId}' not found");
+            return $response->withStatus(404);
+        }
 
-        return $this->render($response, 'expenses/edit.twig', ['expense' => $expense, 'categories' => []]);
+        // Check if the logged-in user is the owner of the edited expense
+        if($expense->userId != $_SESSION['user_id']) {
+            $this->logger->info("[EXPENSE EDIT] User '{$_SESSION['user_id']}' does not have permission to edit this expense");
+            return $response->withStatus(403);
+        }
+
+        return $this->render($response, 'expenses/edit.twig', ['expense' => $expense, 'categories' => $categories]);
     }
 
+    /**
+     * @throws \Exception
+     */
     public function update(Request $request, Response $response, array $routeParams): Response
     {
         // TODO: implement this action method to update an existing expense
 
-        // Hints:
-        // - load the expense to be edited by its ID (use route params to get it)
-        // - check that the logged-in user is the owner of the edited expense, and fail with 403 if not
-        // - get the new values from the request and prepare for update
-        // - update the expense entity with the new values
-        // - rerender the "expenses.edit" page with included errors in case of failure
-        // - redirect to the "expenses.index" page in case of success
+        $userId = $_SESSION['user_id'];
+        $expenseId = $routeParams['id'];
+        $expense = $this->expenseService->findById((int)$expenseId);
 
-        return $response;
+        // Check if the expense exists
+        if($expense == null) {
+            $this->logger->info("[EXPENSE EDIT] Expense '{$expenseId}' not found");
+            return $response->withStatus(404);
+        }
+
+        // Check if the current user owns the expense to be deleted
+        if($expense->userId != $userId) {
+            $this->logger->info("[EXPENSE EDIT] User '{$userId}' does not have permission to edit this expense");
+            return $response->withStatus(403);
+        }
+
+        // Get edited data from the form
+        $body = $request->getParsedBody();
+        $category = $body['category'] ?? null;
+        $amount = $body['amount'] ?? null;
+        $description = $body['description'] ?? null;
+        $date = new \DateTimeImmutable($body['date']) ?: new \DateTimeImmutable();
+
+        $result = $this->expenseService->update((int)$expenseId, $userId, (float)$amount, $description, $date, $category);
+        if($result == ExpenseService::SUCCESS) {
+            return $response->withHeader('Location', '/expenses')->withStatus(302);
+        } else {
+            return $response->withHeader('Location', "/expenses/$expenseId/edit")->withStatus(302);
+        }
     }
 
     public function destroy(Request $request, Response $response, array $routeParams): Response
@@ -135,15 +167,18 @@ class ExpenseController extends BaseController
 
         // Check if the expense exists
         if($expense == null) {
+            $this->logger->info("[EXPENSE DELETE] Expense '{$expenseId}' not found");
             return $response->withStatus(404);
         }
 
         // Check if the current user owns the expense to be deleted
         if($expense->userId != $userId) {
+            $this->logger->info("[EXPENSE DELETE] User '{$userId}' does not have permission to delete this expense");
             return $response->withStatus(403);
         }
 
         $this->expenseService->delete((int)$expenseId);
+        $this->logger->info("[EXPENSE DELETE] Expense '{$expenseId}' deleted");
 
         return $response->withHeader('Location', '/expenses')->withStatus(302);
     }
