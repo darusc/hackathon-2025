@@ -17,6 +17,7 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
 {
     public function __construct(
         private readonly PDO $pdo,
+        private LoggerInterface $logger
     ) {}
 
     /**
@@ -46,6 +47,32 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
             'amount_cents' => $expense->amountCents,
             'description' => $expense->description,
         ]);
+    }
+
+    public function saveImported(array $expenses): void
+    {
+        try {
+            $this->pdo->beginTransaction();
+            $query = 'INSERT INTO expenses (user_id, date, category, amount_cents, description) VALUES (:user_id, :date, :category, :amount_cents, :description)';
+            $statement = $this->pdo->prepare($query);
+
+            foreach ($expenses as $expense) {
+                var_dump($expense);
+                $statement->execute([
+                    'user_id' => $expense->userId,
+                    'date' => $expense->date->format('c'),
+                    'category' => $expense->category,
+                    'amount_cents' => $expense->amountCents,
+                    'description' => $expense->description,
+                ]);
+            }
+
+            $this->pdo->commit();
+            $this->logger->error('[EXPENSES IMPORT] Transaction successful.');
+        } catch (\PDOException $e) {
+            $this->pdo->rollBack();
+            $this->logger->error('[EXPENSES IMPORT] Transaction failed. ' . $e->getMessage());
+        }
     }
 
     public function update(Expense $expense): void

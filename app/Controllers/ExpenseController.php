@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Domain\Entity\Expense;
 use App\Domain\Service\ExpenseService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -125,8 +126,6 @@ class ExpenseController extends BaseController
      */
     public function update(Request $request, Response $response, array $routeParams): Response
     {
-        // TODO: implement this action method to update an existing expense
-
         $userId = $_SESSION['user_id'];
         $expenseId = $routeParams['id'];
         $expense = $this->expenseService->findById((int)$expenseId);
@@ -179,6 +178,30 @@ class ExpenseController extends BaseController
 
         $this->expenseService->delete((int)$expenseId);
         $this->logger->info("[EXPENSE DELETE] Expense '{$expenseId}' deleted");
+
+        return $response->withHeader('Location', '/expenses')->withStatus(302);
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function import(Request $request, Response $response): Response
+    {
+        $files = $request->getUploadedFiles();
+
+        if(empty($files['csv'])) {
+            $this->logger->info("[EXPENSE LOAD CSV] No file uploaded");
+            return $response->withHeader('Location', '/expenses')->withStatus(302);
+        }
+
+        $csvfile = $files['csv'];
+        if($csvfile->getError() != UPLOAD_ERR_OK) {
+            $this->logger->info("[EXPENSE LOAD CSV] File upload error");
+            return $response->withHeader('Location', '/expenses')->withStatus(302);
+        }
+
+        $rows = $this->expenseService->importFromCsv($_SESSION['user_id'], $csvfile);
+        $this->logger->info("[EXPENSES IMPORT] Imported $rows rows");
 
         return $response->withHeader('Location', '/expenses')->withStatus(302);
     }

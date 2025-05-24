@@ -100,12 +100,49 @@ class ExpenseService
         $this->expenses->delete($id);
     }
 
-    public function importFromCsv(User $user, UploadedFileInterface $csvFile): int
+    /**
+     * @throws \Exception
+     */
+    public function importFromCsv(int $userId, UploadedFileInterface $csvFile): int
     {
-        // TODO: process rows in file stream, create and persist entities
-        // TODO: for extra points wrap the whole import in a transaction and rollback only in case writing to DB fails
+        // Move the loaded .csv file into a temporary file
+        $tmpPath = sys_get_temp_dir() . '/' . uniqid('csv_', true) . '.csv';
+        $csvFile->moveTo($tmpPath);
 
-        return 0; // number of imported rows
+        $rows = 0;
+        $expenses = [];
+        $visited = [];
+
+        // Open the temporary file and read its content
+        if(($handle = fopen($tmpPath, "r")) !== FALSE) {
+            $categories = explode(",", $_ENV['CATEGORIES']);
+            while(($data = fgetcsv($handle, 1000)) !== FALSE) {
+                if(!in_array($data[3], $categories)) {
+                    $this->logger->info("[EXPENSE IMPORT] Skip row. Unkown category $data[3].");
+                    continue;
+                }
+
+                // Generate a unique key for each row by trimming all white spaces and
+                $key = implode('|', array_map('trim', $data));
+                if(isset($visited[$key])) {
+                    // Skip current row if it is a duplicate
+                    $this->logger->info("[EXPENSE IMPORT] Skip row. Duplicate $key.");
+                    continue;
+                }
+                $visited[$key] = true;
+                $rows++;
+                var_dump($data[2]);
+                $expense = new Expense(null, $_SESSION['user_id'], new \DateTimeImmutable($data[0]), $data[3], (int)$data[1] * 100, $data[2]);
+                $expenses[] = $expense;
+            }
+            fclose($handle);
+        }
+
+        // Delete the temporary file
+        unlink($tmpPath);
+
+        $this->expenses->saveImported($expenses);
+        return $rows; // number of imported rows
     }
 
     private function validateData(DateTimeImmutable $date, string $category, float $amount, string $description): int {
