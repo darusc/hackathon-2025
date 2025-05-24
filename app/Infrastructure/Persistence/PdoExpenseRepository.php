@@ -57,7 +57,6 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
             $statement = $this->pdo->prepare($query);
 
             foreach ($expenses as $expense) {
-                var_dump($expense);
                 $statement->execute([
                     'user_id' => $expense->userId,
                     'date' => $expense->date->format('c'),
@@ -101,6 +100,7 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
     {
         $query = 'SELECT * FROM expenses 
                   WHERE user_id = :user_id AND strftime("%m", date) = :month AND strftime("%Y", date) = :year
+                  ORDER BY date DESC
                   LIMIT :limit
                   OFFSET :offset';
 
