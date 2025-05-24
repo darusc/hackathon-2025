@@ -38,6 +38,12 @@ class ExpenseController extends BaseController
 
         $count = $this->expenseService->count(['user_id' => $userId, 'year' => $year, 'month' => $month]);
 
+        $importedRows = $_SESSION['importedRows'] ?? null;
+        unset($_SESSION['importedRows']);
+
+        $expenseDestroyed = $_SESSION['expenseDestroyed'] ?? null;
+        unset($_SESSION['expenseDestroyed']);
+
         return $this->render($response, 'expenses/index.twig', [
             'expenses' => $expenses,
             'page'     => $page,
@@ -49,6 +55,8 @@ class ExpenseController extends BaseController
             'selectedMonth' => $month,
             'nextPageUrl' => $this->buildPageUrl($page + 1),
             'previousPageUrl' => $this->buildPageUrl($page - 1),
+            'importedRows' => $importedRows,
+            'expenseDestroyed' => $expenseDestroyed,
         ]);
     }
 
@@ -178,6 +186,7 @@ class ExpenseController extends BaseController
         }
 
         $this->expenseService->delete((int)$expenseId);
+        $_SESSION['expenseDestroyed'] = $expense->description;
         $this->logger->info("[EXPENSE DELETE] Expense '{$expenseId}' deleted");
 
         return $response->withHeader('Location', '/expenses')->withStatus(302);
@@ -202,6 +211,7 @@ class ExpenseController extends BaseController
         }
 
         $rows = $this->expenseService->importFromCsv($_SESSION['user_id'], $csvfile);
+        $_SESSION['importedRows'] = $rows;
         $this->logger->info("[EXPENSES IMPORT] Imported $rows rows");
 
         return $response->withHeader('Location', '/expenses')->withStatus(302);

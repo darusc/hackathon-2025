@@ -28,6 +28,13 @@
 </nav>
 
 <div class="max-w-5xl mx-auto px-4 flex-grow w-full">
+    <script>
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.querySelector("#flashmsg").remove();
+            }, 2000);
+        });
+    </script>
     {% block content %}
     {% endblock %}
 </div>
