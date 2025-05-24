@@ -18,7 +18,6 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
     public function __construct(
         private readonly PDO $pdo,
         private LoggerInterface $logger,
-
     ) {}
 
     /**

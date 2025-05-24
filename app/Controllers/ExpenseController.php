@@ -50,25 +50,51 @@ class ExpenseController extends BaseController
 
     public function create(Request $request, Response $response): Response
     {
-        // TODO: implement this action method to display the create expense page
+        $categories = explode(",", $_ENV['CATEGORIES']);
 
-        // Hints:
-        // - obtain the list of available categories from configuration and pass to the view
+        $category = $_SESSION['category'] ?? null;
+        $amount = $_SESSION['amount'] ?? null;
+        $date = $_SESSION['date'] ?? null;
+        $description = $_SESSION['description'] ?? null;
+        unset($_SESSION['category']);
+        unset($_SESSION['amount']);
+        unset($_SESSION['date']);
+        unset($_SESSION['description']);
 
-        return $this->render($response, 'expenses/create.twig', ['categories' => []]);
+        return $this->render($response, 'expenses/create.twig', [
+            'categories' => $categories,
+            'selectedAmount' => $amount,
+            'selectedDate' => $date,
+            'selectedDescription' => $description,
+            'selectedCategory' => $category,
+        ]);
     }
 
+    /**
+     * @throws \Exception
+     */
     public function store(Request $request, Response $response): Response
     {
-        // TODO: implement this action method to create a new expense
+        $userId = $_SESSION['user_id'];
 
-        // Hints:
-        // - use the session to get the current user ID
-        // - use the expense service to create and persist the expense entity
-        // - rerender the "expenses.create" page with included errors in case of failure
-        // - redirect to the "expenses.index" page in case of success
+        $body = $request->getParsedBody();
+        $category = $body['category'] ?? null;
+        $amount = $body['amount'] ?? null;
+        $description = $body['description'] ?? null;
+        $date = new \DateTimeImmutable($body['date']) ?: new \DateTimeImmutable();
 
-        return $response;
+        $result = $this->expenseService->create($userId, (float)$amount, $description, $date, $category);
+        if($result == ExpenseService::SUCCESS) {
+            return $response->withHeader('Location', '/expenses')->withStatus(302);
+        } else {
+            // Store fields in session to prefill rerendered page
+            $_SESSION['category'] = $category;
+            $_SESSION['amount'] = $amount;
+            $_SESSION['description'] = $description;
+            $_SESSION['date'] = $date;
+
+            return $response->withHeader('Location', '/expenses/create')->withStatus(302);
+        }
     }
 
     public function edit(Request $request, Response $response, array $routeParams): Response
