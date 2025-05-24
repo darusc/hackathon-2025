@@ -19,6 +19,15 @@
                 <span class="text-red-500">{{ errors['password'] }}</span>
             {% endif %}
         </div>
+        <div class="mb-6">
+            <label for="passwordConfirm" class="block text-gray-400 text-sm font-bold mb-2">Password confirm</label>
+            <input type="password" id="passwordConfirm" name="passwordConfirm" required value="{{ password|default('') }}"
+                   class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-400 leading-tight focus:outline-none focus:shadow-outline">
+            {% if errors['passwordConfirm'] %}
+                <span class="text-red-500">{{ errors['passwordConfirm'] }}</span>
+            {% endif %}
+        </div>
+        <input type="hidden" name="csrftoken" value="{{ csrfToken }}"/>
         <button type="submit"
                 class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
             Register

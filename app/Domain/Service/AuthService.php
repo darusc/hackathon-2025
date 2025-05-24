@@ -11,31 +11,56 @@ use Psr\Log\LoggerInterface;
 class AuthService
 {
     public const SUCCESSS = 0;
-    public const INVALID_PASSWORD = 1;
-    public const INVALID_USERNAME = 2;
-    public const USERNAME_ALREADY_EXISTS = 3;
-    public const USERNAME_TOO_SHORT = 4;
-    public const PASSWORD_TOO_SHORT = 5;
-    public const PASSWORD_NO_NUMBER = 6;
+    public const INVALID_USERNAME_PASSWORD = "Invalid username or password";
+    public const USERNAME_ALREADY_EXISTS = "Username already exists";
+    public const USERNAME_TOO_SHORT = "Username must be at least 4 characters long";
+    public const PASSWORD_TOO_SHORT = "Password must be at least 8 characters long";
+    public const PASSWORD_NO_NUMBER = "Password must contain at least 1 number";
+    public const PASSWORD_NO_MATCH = "Passwords don't match";
 
     public function __construct(
         private readonly UserRepositoryInterface $users,
         private LoggerInterface $logger,
     ) {}
 
-    public function register(string $username, string $password): int
+    /**
+     * Register a new user with the given username and password.
+     * Returns an array representing the errors for each
+     * field (username, password, passwordConfirmation)
+     * Or true if there register was successful
+     */
+    public function register(string $username, string $password, string $passwordConfirm): array | bool
     {
+        $errors = [self::SUCCESSS, self::SUCCESSS, self::SUCCESSS];
+
         // Check if a user with the current username already exists
         $user = $this->users->findByUsername($username);
         if ($user != null) {
             $this->logger->alert("[REGISTER] User '{$username}' already exists");
-            return self::USERNAME_ALREADY_EXISTS;
+            $errors[0] = self::USERNAME_ALREADY_EXISTS;
         }
 
-        $err = $this->validateCredentials($username, $password);
-        if($err != self::SUCCESSS) {
-            $this->logger->alert("[REGISTER] Credentials are invalid. ($err)");
-            return $err;
+
+        // Validate the given username and password for registering.
+        // Username criteria: length >= 4 characters
+        // Password criteria: length >= 8 characters + at least 1 number
+        if(strlen($username) < 4){
+            $errors[0] = self::USERNAME_TOO_SHORT;
+        }
+        if(strlen($password) < 8){
+            $errors[1] = self::PASSWORD_TOO_SHORT;
+        }
+        // Check if password contains at least 1 number
+        if(!preg_match("/\d/", $password)){
+            $errors[1] = self::PASSWORD_NO_NUMBER;
+        }
+        if(strcmp($password, $passwordConfirm) != 0){
+            $errors[2] = self::PASSWORD_NO_MATCH;
+        }
+
+        if($errors[0] != null || $errors[1] != null || $errors[2] != null) {
+            $this->logger->alert("[REGISTER] Credentials are invalid. ($errors[0], $errors[1], $errors[2]);");
+            return $errors;
         }
 
         // Hash the password before storing it in the database
@@ -46,16 +71,21 @@ class AuthService
 
         $this->logger->alert("[REGISTER] User '{$username}' has been created");
 
-        return self::SUCCESSS;
+        return true;
     }
 
-    public function attempt(string $username, string $password): int
+    /**
+     * Attempt to login with the given username and password.
+     * If login is successful returns true otherwise returns a string
+     * representing the encountered error.
+     */
+    public function attempt(string $username, string $password): string | bool
     {
         // Check if the username exists
         $user = $this->users->findByUsername($username);
         if($user == null) {
             $this->logger->alert("[LOGIN] User '{$username}' does not exist");
-            return self::INVALID_USERNAME;
+            return self::INVALID_USERNAME_PASSWORD;
         }
 
         if(password_verify($password, $user->passwordHash)) {
@@ -65,31 +95,9 @@ class AuthService
             session_regenerate_id(true);
             $_SESSION['user_id'] = $user->id;
 
-            return self::SUCCESSS;
+            return true;
         }
 
-        return self::INVALID_PASSWORD;
-    }
-
-    /**
-     * Validate the given username and password for registering.
-     * Username criteria: length >= 4 characters
-     * Password criteria: length >= 8 characters + at least 1 number
-     */
-    private function validateCredentials(string $username, string $password): int {
-        if(strlen($username) < 4){
-            return self::USERNAME_TOO_SHORT;
-        }
-
-        if(strlen($password) < 8){
-            return self::PASSWORD_TOO_SHORT;
-        }
-
-        // Check if password contains at least 1 number
-        if(!preg_match("/\d/", $password)){
-            return self::PASSWORD_NO_NUMBER;
-        }
-
-        return self::SUCCESSS;
+        return self::INVALID_USERNAME_PASSWORD;
     }
 }
