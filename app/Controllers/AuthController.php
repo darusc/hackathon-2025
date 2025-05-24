@@ -68,20 +68,38 @@ class AuthController extends BaseController
 
     public function showLogin(Request $request, Response $response): Response
     {
-        return $this->render($response, 'auth/login.twig');
+        // Get previous possible errors
+        $errors = $_SESSION['loginErrors'] ?? [];
+        unset($_SESSION['loginErrors']);
+
+        return $this->render($response, 'auth/login.twig', ['errors' => $errors,]);
     }
 
     public function login(Request $request, Response $response): Response
     {
-        // TODO: call corresponding service to perform user login, handle login failures
+        $params = $request->getParsedBody();
+        $username = $params['username'];
+        $password = $params['password'];
 
-        return $response->withHeader('Location', '/')->withStatus(302);
+        $result = $this->authService->attempt($username, $password);
+        if($result == AuthService::SUCCESSS){
+            return $response->withHeader('Location', '/')->withStatus(302);
+        } else {
+            // Build the error messages based on the error returned from authService
+            $_SESSION['loginErrors'] = [
+                'username' => $result == AuthService::INVALID_USERNAME ? "Invalid username" : null,
+                'password' => $result == AuthService::INVALID_PASSWORD ? "Invalid password" : null
+            ];
+
+            return $response->withHeader('Location', '/login')->withStatus(302);
+        }
+
     }
 
     public function logout(Request $request, Response $response): Response
     {
-        // TODO: handle logout by clearing session data and destroying session
-
+        session_unset();
+        session_destroy();
         return $response->withHeader('Location', '/login')->withStatus(302);
     }
 }
