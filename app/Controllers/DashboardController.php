@@ -18,8 +18,8 @@ class DashboardController extends BaseController
 
     public function __construct(
         Twig $view,
-        private ExpenseService $expenseService,
-        private MonthlySummaryService $summaryService,
+        private readonly ExpenseService        $expenseService,
+        private readonly MonthlySummaryService $summaryService,
     ) {
         parent::__construct($view);
         $this->alertGenerator = new AlertGenerator($summaryService);

@@ -6,11 +6,12 @@ namespace App\Domain\Service;
 
 use App\Domain\Entity\User;
 use App\Domain\Repository\UserRepositoryInterface;
+use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 
 class AuthService
 {
-    public const SUCCESSS = 0;
+    public const SUCCESS = 0;
     public const INVALID_USERNAME_PASSWORD = "Invalid username or password";
     public const USERNAME_ALREADY_EXISTS = "Username already exists";
     public const USERNAME_TOO_SHORT = "Username must be at least 4 characters long";
@@ -20,7 +21,7 @@ class AuthService
 
     public function __construct(
         private readonly UserRepositoryInterface $users,
-        private LoggerInterface $logger,
+        private readonly LoggerInterface $logger,
     ) {}
 
     /**
@@ -31,12 +32,12 @@ class AuthService
      */
     public function register(string $username, string $password, string $passwordConfirm): array | bool
     {
-        $errors = [self::SUCCESSS, self::SUCCESSS, self::SUCCESSS];
+        $errors = [self::SUCCESS, self::SUCCESS, self::SUCCESS];
 
         // Check if a user with the current username already exists
         $user = $this->users->findByUsername($username);
         if ($user != null) {
-            $this->logger->alert("[REGISTER] User '{$username}' already exists");
+            $this->logger->alert("[REGISTER] User '$username' already exists");
             $errors[0] = self::USERNAME_ALREADY_EXISTS;
         }
 
@@ -66,16 +67,16 @@ class AuthService
         // Hash the password before storing it in the database
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-        $user = new User(null, $username, $hashed_password, new \DateTimeImmutable());
+        $user = new User(null, $username, $hashed_password, new DateTimeImmutable());
         $this->users->save($user);
 
-        $this->logger->alert("[REGISTER] User '{$username}' has been created");
+        $this->logger->alert("[REGISTER] User '$username' has been created");
 
         return true;
     }
 
     /**
-     * Attempt to login with the given username and password.
+     * Attempt to log in with the given username and password.
      * If login is successful returns true otherwise returns a string
      * representing the encountered error.
      */
@@ -84,12 +85,12 @@ class AuthService
         // Check if the username exists
         $user = $this->users->findByUsername($username);
         if($user == null) {
-            $this->logger->alert("[LOGIN] User '{$username}' does not exist");
+            $this->logger->alert("[LOGIN] User '$username' does not exist");
             return self::INVALID_USERNAME_PASSWORD;
         }
 
         if(password_verify($password, $user->passwordHash)) {
-            $this->logger->alert("[LOGIN] User '{$username}' has been authenticated");
+            $this->logger->alert("[LOGIN] User '$username' has been authenticated");
 
             // Start new session and store user data
             session_regenerate_id(true);

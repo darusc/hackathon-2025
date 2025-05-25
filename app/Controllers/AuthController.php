@@ -15,8 +15,8 @@ class AuthController extends BaseController
 {
     public function __construct(
         Twig $view,
-        private AuthService $authService,
-        private LoggerInterface $logger,
+        private readonly AuthService $authService,
+        private readonly LoggerInterface $logger,
     ) {
         parent::__construct($view);
     }
@@ -69,6 +69,7 @@ class AuthController extends BaseController
             return $response->withHeader('Location', '/register')->withStatus(302);
         }
     }
+
 
     /**
      * @throws RandomException

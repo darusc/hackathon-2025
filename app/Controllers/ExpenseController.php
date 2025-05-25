@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Domain\Entity\Expense;
 use App\Domain\Service\ExpenseService;
+use DateTimeImmutable;
+use Exception;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Log\LoggerInterface;
@@ -19,7 +20,7 @@ class ExpenseController extends BaseController
     public function __construct(
         Twig $view,
         private readonly ExpenseService $expenseService,
-        private LoggerInterface $logger
+        private readonly LoggerInterface $logger
     ) {
         parent::__construct($view);
     }
@@ -79,7 +80,7 @@ class ExpenseController extends BaseController
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function store(Request $request, Response $response): Response
     {
@@ -89,7 +90,7 @@ class ExpenseController extends BaseController
         $category = $body['category'] ?? null;
         $amount = $body['amount'] ?? null;
         $description = $body['description'] ?? null;
-        $date = new \DateTimeImmutable($body['date']) ?: new \DateTimeImmutable();
+        $date = new DateTimeImmutable($body['date']) ?: new DateTimeImmutable();
 
         $result = $this->expenseService->create($userId, (float)$amount, $description, $date, $category);
         if(is_bool($result) && $result) {
@@ -115,7 +116,7 @@ class ExpenseController extends BaseController
         $expense = $this->expenseService->findById((int)$expenseId);
 
         if($expense == null) {
-            $this->logger->info("[EXPENSE EDIT] Expense '{$expenseId}' not found");
+            $this->logger->info("[EXPENSE EDIT] Expense '$expenseId' not found");
             return $response->withStatus(404);
         }
 
@@ -132,7 +133,7 @@ class ExpenseController extends BaseController
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function update(Request $request, Response $response, array $routeParams): Response
     {
@@ -142,13 +143,13 @@ class ExpenseController extends BaseController
 
         // Check if the expense exists
         if($expense == null) {
-            $this->logger->info("[EXPENSE EDIT] Expense '{$expenseId}' not found");
+            $this->logger->info("[EXPENSE EDIT] Expense '$expenseId' not found");
             return $response->withStatus(404);
         }
 
         // Check if the current user owns the expense to be deleted
         if($expense->userId != $userId) {
-            $this->logger->info("[EXPENSE EDIT] User '{$userId}' does not have permission to edit this expense");
+            $this->logger->info("[EXPENSE EDIT] User '$userId' does not have permission to edit this expense");
             return $response->withStatus(403);
         }
 
@@ -157,7 +158,7 @@ class ExpenseController extends BaseController
         $category = $body['category'] ?? null;
         $amount = $body['amount'] ?? null;
         $description = $body['description'] ?? null;
-        $date = new \DateTimeImmutable($body['date']) ?: new \DateTimeImmutable();
+        $date = new DateTimeImmutable($body['date']) ?: new DateTimeImmutable();
 
         $result = $this->expenseService->update((int)$expenseId, $userId, (float)$amount, $description, $date, $category);
         if(is_bool($result) && $result) {
@@ -177,25 +178,25 @@ class ExpenseController extends BaseController
 
         // Check if the expense exists
         if($expense == null) {
-            $this->logger->info("[EXPENSE DELETE] Expense '{$expenseId}' not found");
+            $this->logger->info("[EXPENSE DELETE] Expense '$expenseId' not found");
             return $response->withStatus(404);
         }
 
         // Check if the current user owns the expense to be deleted
         if($expense->userId != $userId) {
-            $this->logger->info("[EXPENSE DELETE] User '{$userId}' does not have permission to delete this expense");
+            $this->logger->info("[EXPENSE DELETE] User '$userId' does not have permission to delete this expense");
             return $response->withStatus(403);
         }
 
         $this->expenseService->delete((int)$expenseId);
         $_SESSION['expenseDestroyed'] = $expense->description;
-        $this->logger->info("[EXPENSE DELETE] Expense '{$expenseId}' deleted");
+        $this->logger->info("[EXPENSE DELETE] Expense '$expenseId' deleted");
 
         return $response->withHeader('Location', '/expenses')->withStatus(302);
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function import(Request $request, Response $response): Response
     {

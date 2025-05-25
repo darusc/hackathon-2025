@@ -5,15 +5,14 @@ declare(strict_types=1);
 namespace App\Domain\Service;
 
 use App\Domain\Entity\Expense;
-use App\Domain\Entity\User;
 use App\Domain\Repository\ExpenseRepositoryInterface;
 use DateTimeImmutable;
+use Exception;
 use Psr\Http\Message\UploadedFileInterface;
 use Psr\Log\LoggerInterface;
 
 class ExpenseService
 {
-    public const SUCCESS = 0;
     public const ERROR_DATE = "Date must be less than or equal to today";
     public const ERROR_CATEGORY = "Category must be selected";
     public const ERROR_AMOUNT = "Amount must be greater than 0";
@@ -22,7 +21,7 @@ class ExpenseService
 
     public function __construct(
         private readonly ExpenseRepositoryInterface $expenses,
-        private LoggerInterface $logger
+        private readonly LoggerInterface $logger
     ) {}
 
     public function findById(int $id): Expense|null {
@@ -31,18 +30,11 @@ class ExpenseService
 
     public function list(int $userId, int $year, int $month, int $pageNumber, int $pageSize): array
     {
-        $data = $this->expenses->findBy(
+        return $this->expenses->findBy(
             ['user_id' => $userId, 'year' => $year, 'month' => $month],
             ($pageNumber - 1) * $pageSize,
             $pageSize
         );
-
-        // Sort descending by date
-        usort($data, function (Expense $e1, Expense $e2) {
-            return $e2->date <=> $e1->date;
-        });
-
-        return $data;
     }
 
     public function listExpenditureYears(int $userId): array {
@@ -113,7 +105,7 @@ class ExpenseService
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function importFromCsv(int $userId, UploadedFileInterface $csvFile): int
     {
@@ -130,7 +122,7 @@ class ExpenseService
             $categories = explode(",", $_ENV['CATEGORIES']);
             while(($data = fgetcsv($handle, 1000)) !== FALSE) {
                 if(!in_array($data[3], $categories)) {
-                    $this->logger->info("[EXPENSE IMPORT] Skip row. Unkown category $data[3].");
+                    $this->logger->info("[EXPENSE IMPORT] Skip row. Unknown category $data[3].");
                     continue;
                 }
 
@@ -143,7 +135,7 @@ class ExpenseService
                 }
                 $visited[$key] = true;
                 $rows++;
-                $expense = new Expense(null, $userId, new \DateTimeImmutable($data[0]), $data[3], (int)$data[1] * 100, $data[2]);
+                $expense = new Expense(null, $userId, new DateTimeImmutable($data[0]), $data[3], (int)$data[1] * 100, $data[2]);
                 $expenses[] = $expense;
             }
             fclose($handle);

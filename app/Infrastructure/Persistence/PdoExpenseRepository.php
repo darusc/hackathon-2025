@@ -5,19 +5,18 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence;
 
 use App\Domain\Entity\Expense;
-use App\Domain\Entity\User;
 use App\Domain\Repository\ExpenseRepositoryInterface;
 use DateTimeImmutable;
 use Exception;
 use PDO;
+use PDOException;
 use Psr\Log\LoggerInterface;
-use Slim\Logger;
 
 class PdoExpenseRepository implements ExpenseRepositoryInterface
 {
     public function __construct(
         private readonly PDO $pdo,
-        private LoggerInterface $logger
+        private readonly LoggerInterface $logger
     ) {}
 
     /**
@@ -68,7 +67,7 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
 
             $this->pdo->commit();
             $this->logger->error('[EXPENSES IMPORT] Transaction successful.');
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             $this->pdo->rollBack();
             $this->logger->error('[EXPENSES IMPORT] Transaction failed. ' . $e->getMessage());
         }
@@ -98,11 +97,11 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
      */
     public function findBy(array $criteria, int $from, int $limit): array
     {
-        $query = 'SELECT * FROM expenses 
-                  WHERE user_id = :user_id AND strftime("%m", date) = :month AND strftime("%Y", date) = :year
+        $query = "SELECT * FROM expenses 
+                  WHERE user_id = :user_id AND strftime('%m', date) = :month AND strftime('%Y', date) = :year
                   ORDER BY date DESC
                   LIMIT :limit
-                  OFFSET :offset';
+                  OFFSET :offset";
 
         $statement = $this->pdo->prepare($query);
         $statement->execute([
@@ -145,7 +144,7 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
 
     public function listExpenditureYears(int $userId): array
     {
-        $query = 'SELECT DISTINCT strftime("%Y", date) as year FROM expenses WHERE user_id = :user_id';
+        $query = "SELECT DISTINCT strftime('%Y', date) as year FROM expenses WHERE user_id = :user_id";
 
         $statement = $this->pdo->prepare($query);
         $statement->execute(['user_id' => $userId]);
@@ -157,9 +156,9 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
         }, $data);
     }
 
-    public function sumAmountsByCategory(int $userId, int $year, int $month, string $category): int
+    public function sumAmountsByCategory(int $userId, int $year, int $month, string $category): float
     {
-        $query = 'SELECT SUM(amount) FROM expenses WHERE user_id = :user_id AND category = :category AND strftime("%Y", date) = :year AND strftime("%m", date) = :month';
+        $query = "SELECT SUM(amount) FROM expenses WHERE user_id = :user_id AND category = :category AND strftime('%Y', date) = :year AND strftime('%m', date) = :month";
         $statement = $this->pdo->prepare($query);
         $statement->execute([
             'user_id' => $userId,
@@ -173,7 +172,7 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
 
     public function averageAmountsByCategory(int $userId, int $year, int $month, string $category): float
     {
-        $query = 'SELECT AVG(amount) FROM expenses WHERE user_id = :user_id AND category = :category AND strftime("%Y", date) = :year AND strftime("%m", date) = :month';
+        $query = "SELECT AVG(amount) FROM expenses WHERE user_id = :user_id AND category = :category AND strftime('%Y', date) = :year AND strftime('%m', date) = :month";
         $statement = $this->pdo->prepare($query);
         $statement->execute([
             'user_id' => $userId,
@@ -185,9 +184,9 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
         return $statement->fetchColumn() ?: 0;
     }
 
-    public function sumAmounts(int $userId, int $year, int $month): int
+    public function sumAmounts(int $userId, int $year, int $month): float
     {
-        $query = 'SELECT SUM(amount) FROM expenses WHERE user_id = :user_id AND strftime("%Y", date) = :year AND strftime("%m", date) = :month';
+        $query = "SELECT SUM(amount) FROM expenses WHERE user_id = :user_id AND strftime('%Y', date) = :year AND strftime('%m', date) = :month";
         $statement = $this->pdo->prepare($query);
         $statement->execute([
             'user_id' => $userId,

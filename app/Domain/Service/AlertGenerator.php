@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Service;
 
-use App\Domain\Entity\User;
-use App\Domain\Repository\ExpenseRepositoryInterface;
-use Psr\Log\LoggerInterface;
-
 class AlertGenerator
 {
     private array $categoryBudgets;
