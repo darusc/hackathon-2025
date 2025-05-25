@@ -104,10 +104,18 @@ A solution with passing analysis and unit tests will receive extra points.
 ## Delivery details
 
 Participant:
-- Full name: ...
-- Email address: ...
+- Full name: Darius Cirneala
+- Email address: dariuscirneala05@gmail.com
 
 Features fully implemented:
-- ...
+- **/register** - Sign-up form & action + hashing function, password 'again', CSRF proof
+- **/login** - Login form & action + password verify, prevent session fixation, CSRF proof
+- **/logout**
+- **/expenses** - Page with expenses table & previous/next page links
+- **/expenses/add** - Form to add new expense + import from `.csv` and show flash message
+- **/expense/edit** - Form to edit existing expense
+- **/expense/delete** - Delete expense + show flash message
+- **/dashboard** - Overview page, summary and overspending alerts + categories and spending budgets configured in `.env`
+- **expenses table** - Migrated amount_cents INTEGER to amount REAL
 
 Other instructions about setting up the application (if any): ...
