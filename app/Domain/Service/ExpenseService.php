@@ -14,10 +14,10 @@ use Psr\Log\LoggerInterface;
 class ExpenseService
 {
     public const SUCCESS = 0;
-    public const ERROR_DATE = 1;
-    public const ERROR_CATEGORY = 2;
-    public const ERROR_AMOUNT = 3;
-    public const ERROR_DESCRIPTION = 4;
+    public const ERROR_DATE = "Date must be less than or equal to today";
+    public const ERROR_CATEGORY = "Category must be selected";
+    public const ERROR_AMOUNT = "Amount must be greater than 0";
+    public const ERROR_DESCRIPTION = "Description must not be empty";
 
 
     public function __construct(
@@ -53,17 +53,23 @@ class ExpenseService
         return $this->expenses->countBy($criteria);
     }
 
+    /**
+     * @return array|bool Array containing the errors [date, category, amount, description]
+     * or true if create succeeded
+     */
     public function create(
         int $userId,
         float $amount,
         string $description,
         DateTimeImmutable $date,
         string $category,
-    ): int {
-        $result = $this->validateData($date, $category, $amount, $description);
-        if($result != self::SUCCESS) {
-            $this->logger->info("Expense create failed. ($result)");
-            return $result;
+    ): array|bool {
+        $errors = [null, null, null, null];
+
+        $result = $this->validateData($date, $category, $amount, $description, $errors);
+        if(!$result) {
+            $this->logger->info("Expense create failed.");
+            return $errors;
         }
 
         $expense = new Expense(null, $userId, $date, $category, (int)($amount * 100), $description);
@@ -71,9 +77,13 @@ class ExpenseService
 
         $this->logger->info("Expense created.");
 
-        return self::SUCCESS;
+        return true;
     }
 
+    /**
+     * @return array|bool Array containing the errors [date, category, amount, description]
+     * or true if create succeeded
+     */
     public function update(
         int $id,
         int $userId,
@@ -81,11 +91,13 @@ class ExpenseService
         string $description,
         DateTimeImmutable $date,
         string $category,
-    ): int {
-        $result = $this->validateData($date, $category, $amount, $description);
-        if($result != self::SUCCESS) {
+    ): array|bool {
+        $errors = [null, null, null, null];
+
+        $result = $this->validateData($date, $category, $amount, $description, $errors);
+        if(!$result) {
             $this->logger->info("[EXPENSE UPDATE] Expense $id update failed. ($result)");
-            return $result;
+            return $errors;
         }
 
         $expense = new Expense($id, $userId, $date, $category, (int)($amount * 100), $description);
@@ -93,7 +105,7 @@ class ExpenseService
 
         $this->logger->info("[EXPENSE UPDATE] Expense $id updated");
 
-        return self::SUCCESS;
+        return true;
     }
 
     public function delete(int $id): void {
@@ -144,23 +156,38 @@ class ExpenseService
         return $rows; // number of imported rows
     }
 
-    private function validateData(DateTimeImmutable $date, string $category, float $amount, string $description): int {
+    /**
+     * Validates the expense data with the following criteria:
+     * Date ≤ today
+     * Category selected
+     * Amount > 0
+     * Description not empty
+     *
+     * Returns true if all criteria is met, false otherwise.
+     * Sets the $errors param accordingly => [date, category, amount, description].
+     */
+    private function validateData(DateTimeImmutable $date, string $category, float $amount, string $description, array &$errors): bool {
         if($date > new DateTimeImmutable()) {
-            return self::ERROR_DATE;
+           $errors[0] = self::ERROR_DATE;
         }
 
         if($category === "Select a category") {
-            return self::ERROR_CATEGORY;
+            $errors[1] = self::ERROR_CATEGORY;
         }
 
         if($amount <= 0) {
-            return self::ERROR_AMOUNT;
+            $errors[2] = self::ERROR_AMOUNT;
         }
 
         if(strlen($description) == 0) {
-            return self::ERROR_DESCRIPTION;
+            $errors[3] = self::ERROR_DESCRIPTION;
         }
 
-        return self::SUCCESS;
+        foreach($errors as $error) {
+            if($error != null) {
+                return false;
+            }
+        }
+        return true;
     }
 }

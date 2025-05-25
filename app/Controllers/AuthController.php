@@ -29,13 +29,8 @@ class AuthController extends BaseController
         $this->logger->info('Register page requested');
 
         // Get previous filled credentials and possible error
-        $errors = $_SESSION['registerErrors'] ?? [];
-        $username = $_SESSION['username'] ?? null;
-        $password = $_SESSION['password'] ?? null;
-        $passwordConfirm = $_SESSION['passwordConfirm'] ?? null;
-        unset($_SESSION['registerErrors']);
-        unset($_SESSION['username']);
-        unset($_SESSION['password']);
+        $previousData = $_SESSION['register'] ?? null;
+        unset($_SESSION['register']);
 
         // Generate a random CSRF token which is hidden in the form
         // After the form is submitted the controller checks the
@@ -43,10 +38,8 @@ class AuthController extends BaseController
         $_SESSION['csrfToken'] = bin2hex(random_bytes(32));
 
         return $this->render($response, 'auth/register.twig', [
-            'username' => $username,
-            'password' => $password,
-            'passwordConfirm' => $passwordConfirm,
-            'errors' => $errors,
+            'username' => $previousData['username'] ?? null,
+            'errors' => $previousData['errors'] ?? null,
             'csrfToken' => $_SESSION['csrfToken']
         ]);
     }
@@ -70,12 +63,8 @@ class AuthController extends BaseController
             return $response->withHeader('Location', '/login')->withStatus(302);
         } else {
             // Pass the register error and the credentials to the register view through $_SESSION
-            $_SESSION['username'] = $username;
-            $_SESSION['password'] = $password;
-            $_SESSION['passwordConfirm'] = $passwordConfirm;
-
-            // Set the error messages based on the result returned from authService
-            $_SESSION['registerErrors'] = ['username' => $result[0], 'password' => $result[1], 'passwordConfirm' => $result[2]];
+            $errors = ['username' => $result[0], 'password' => $result[1], 'passwordConfirm' => $result[2]];
+            $_SESSION['register'] = ['username' => $username, 'errors' => $errors];
 
             return $response->withHeader('Location', '/register')->withStatus(302);
         }

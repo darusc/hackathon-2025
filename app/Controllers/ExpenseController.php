@@ -75,23 +75,7 @@ class ExpenseController extends BaseController
     public function create(Request $request, Response $response): Response
     {
         $categories = explode(",", $_ENV['CATEGORIES']);
-
-        $category = $_SESSION['category'] ?? null;
-        $amount = $_SESSION['amount'] ?? null;
-        $date = $_SESSION['date'] ?? null;
-        $description = $_SESSION['description'] ?? null;
-        unset($_SESSION['category']);
-        unset($_SESSION['amount']);
-        unset($_SESSION['date']);
-        unset($_SESSION['description']);
-
-        return $this->render($response, 'expenses/create.twig', [
-            'categories' => $categories,
-            'selectedAmount' => $amount,
-            'selectedDate' => $date,
-            'selectedDescription' => $description,
-            'selectedCategory' => $category,
-        ]);
+        return $this->render($response, 'expenses/create.twig', ['categories' => $categories]);
     }
 
     /**
@@ -108,16 +92,18 @@ class ExpenseController extends BaseController
         $date = new \DateTimeImmutable($body['date']) ?: new \DateTimeImmutable();
 
         $result = $this->expenseService->create($userId, (float)$amount, $description, $date, $category);
-        if($result == ExpenseService::SUCCESS) {
+        if(is_bool($result) && $result) {
             return $response->withHeader('Location', '/expenses')->withStatus(302);
         } else {
-            // Store fields in session to prefill rerendered page
-            $_SESSION['category'] = $category;
-            $_SESSION['amount'] = $amount;
-            $_SESSION['description'] = $description;
-            $_SESSION['date'] = $date;
-
-            return $response->withHeader('Location', '/expenses/create')->withStatus(302);
+            // Prefill the create page with previous data
+            return $this->render($response, 'expenses/create.twig', [
+                'categories' => explode(",", $_ENV['CATEGORIES']),
+                'selectedAmount' => $amount,
+                'selectedDate' => $date->format('c'),
+                'selectedDescription' => $description,
+                'selectedCategory' => $category,
+                'errors' => $result,
+            ]);
         }
     }
 
@@ -139,7 +125,10 @@ class ExpenseController extends BaseController
             return $response->withStatus(403);
         }
 
-        return $this->render($response, 'expenses/edit.twig', ['expense' => $expense, 'categories' => $categories]);
+        $previousEditErrors = $_SESSION['expenseEditErrors'] ?? null;
+        unset($_SESSION['expenseEditErrors']);
+
+        return $this->render($response, 'expenses/edit.twig', ['expense' => $expense, 'categories' => $categories, 'errors' => $previousEditErrors]);
     }
 
     /**
@@ -171,9 +160,10 @@ class ExpenseController extends BaseController
         $date = new \DateTimeImmutable($body['date']) ?: new \DateTimeImmutable();
 
         $result = $this->expenseService->update((int)$expenseId, $userId, (float)$amount, $description, $date, $category);
-        if($result == ExpenseService::SUCCESS) {
+        if(is_bool($result) && $result) {
             return $response->withHeader('Location', '/expenses')->withStatus(302);
         } else {
+            $_SESSION['expenseEditErrors'] = $result;
             return $response->withHeader('Location', "/expenses/$expenseId/edit")->withStatus(302);
         }
     }
