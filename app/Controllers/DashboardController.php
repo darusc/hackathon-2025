@@ -19,10 +19,10 @@ class DashboardController extends BaseController
     public function __construct(
         Twig $view,
         private ExpenseService $expenseService,
-        private MonthlySummaryService $monthlySummaryService
+        private MonthlySummaryService $summaryService,
     ) {
         parent::__construct($view);
-        $this->alertGenerator = new AlertGenerator($monthlySummaryService);
+        $this->alertGenerator = new AlertGenerator($summaryService);
     }
 
     public function index(Request $request, Response $response): Response
@@ -35,9 +35,9 @@ class DashboardController extends BaseController
         $years = $this->expenseService->listExpenditureYears($userId);
 
         $alerts = $this->alertGenerator->generate($userId, $year, $month);
-        $totalExpenditure = $this->monthlySummaryService->computeTotalExpenditure($userId, $year, $month);
-        $totalsForCategories = $this->monthlySummaryService->computePerCategoryTotals($userId, $year, $month);
-        $averageForCategories = $this->monthlySummaryService->computePerCategoryAverages($userId, $year, $month);
+        $totalExpenditure = $this->summaryService->computeTotalExpenditure($userId, $year, $month);
+        $totalsForCategories = $this->summaryService->computePerCategoryTotals($userId, $year, $month);
+        $averageForCategories = $this->summaryService->computePerCategoryAverages($userId, $year, $month);
 
         return $this->render($response, 'dashboard.twig', [
             'months' => self::MONTHS,

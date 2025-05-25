@@ -16,6 +16,8 @@ interface ExpenseRepositoryInterface
 
     public function saveImported(array $expenses): void;
 
+    public function update(Expense $expense): void;
+
     public function delete(int $id): void;
 
     public function find(int $id): ?Expense;
