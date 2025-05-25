@@ -38,13 +38,13 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
 
     public function save(Expense $expense): void
     {
-        $query = 'INSERT INTO expenses (user_id, date, category, amount_cents, description) VALUES (:user_id, :date, :category, :amount_cents, :description)';
+        $query = 'INSERT INTO expenses (user_id, date, category, amount, description) VALUES (:user_id, :date, :category, :amount, :description)';
         $statement = $this->pdo->prepare($query);
         $statement->execute([
             'user_id' => $expense->userId,
             'date' => $expense->date->format('c'),
             'category' => $expense->category,
-            'amount_cents' => $expense->amountCents,
+            'amount' => $expense->amount,
             'description' => $expense->description,
         ]);
     }
@@ -53,7 +53,7 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
     {
         try {
             $this->pdo->beginTransaction();
-            $query = 'INSERT INTO expenses (user_id, date, category, amount_cents, description) VALUES (:user_id, :date, :category, :amount_cents, :description)';
+            $query = 'INSERT INTO expenses (user_id, date, category, amount, description) VALUES (:user_id, :date, :category, :amount, :description)';
             $statement = $this->pdo->prepare($query);
 
             foreach ($expenses as $expense) {
@@ -61,7 +61,7 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
                     'user_id' => $expense->userId,
                     'date' => $expense->date->format('c'),
                     'category' => $expense->category,
-                    'amount_cents' => $expense->amountCents,
+                    'amount' => $expense->amount,
                     'description' => $expense->description,
                 ]);
             }
@@ -76,13 +76,13 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
 
     public function update(Expense $expense): void
     {
-        $query = 'UPDATE expenses SET date = :date, category = :category, amount_cents = :amount_cents, description = :description WHERE id = :id';
+        $query = 'UPDATE expenses SET date = :date, category = :category, amount = :amount, description = :description WHERE id = :id';
         $statement = $this->pdo->prepare($query);
         $statement->execute([
             'id' => $expense->id,
             'date' => $expense->date->format('c'),
             'category' => $expense->category,
-            'amount_cents' => $expense->amountCents,
+            'amount' => $expense->amount,
             'description' => $expense->description,
         ]);
     }
@@ -159,7 +159,7 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
 
     public function sumAmountsByCategory(int $userId, int $year, int $month, string $category): int
     {
-        $query = 'SELECT SUM(amount_cents) FROM expenses WHERE user_id = :user_id AND category = :category AND strftime("%Y", date) = :year AND strftime("%m", date) = :month';
+        $query = 'SELECT SUM(amount) FROM expenses WHERE user_id = :user_id AND category = :category AND strftime("%Y", date) = :year AND strftime("%m", date) = :month';
         $statement = $this->pdo->prepare($query);
         $statement->execute([
             'user_id' => $userId,
@@ -173,7 +173,7 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
 
     public function averageAmountsByCategory(int $userId, int $year, int $month, string $category): float
     {
-        $query = 'SELECT AVG(amount_cents) FROM expenses WHERE user_id = :user_id AND category = :category AND strftime("%Y", date) = :year AND strftime("%m", date) = :month';
+        $query = 'SELECT AVG(amount) FROM expenses WHERE user_id = :user_id AND category = :category AND strftime("%Y", date) = :year AND strftime("%m", date) = :month';
         $statement = $this->pdo->prepare($query);
         $statement->execute([
             'user_id' => $userId,
@@ -187,7 +187,7 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
 
     public function sumAmounts(int $userId, int $year, int $month): int
     {
-        $query = 'SELECT SUM(amount_cents) FROM expenses WHERE user_id = :user_id AND strftime("%Y", date) = :year AND strftime("%m", date) = :month';
+        $query = 'SELECT SUM(amount) FROM expenses WHERE user_id = :user_id AND strftime("%Y", date) = :year AND strftime("%m", date) = :month';
         $statement = $this->pdo->prepare($query);
         $statement->execute([
             'user_id' => $userId,
@@ -208,7 +208,7 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
             $data['user_id'],
             new DateTimeImmutable($data['date']),
             $data['category'],
-            $data['amount_cents'],
+            $data['amount'],
             $data['description'],
         );
     }

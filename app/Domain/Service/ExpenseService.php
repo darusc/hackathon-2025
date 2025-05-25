@@ -72,7 +72,7 @@ class ExpenseService
             return $errors;
         }
 
-        $expense = new Expense(null, $userId, $date, $category, (int)($amount * 100), $description);
+        $expense = new Expense(null, $userId, $date, $category, $amount, $description);
         $this->expenses->save($expense);
 
         $this->logger->info("Expense created.");
@@ -96,11 +96,11 @@ class ExpenseService
 
         $result = $this->validateData($date, $category, $amount, $description, $errors);
         if(!$result) {
-            $this->logger->info("[EXPENSE UPDATE] Expense $id update failed. ($result)");
+            $this->logger->info("[EXPENSE UPDATE] Expense $id update failed.");
             return $errors;
         }
 
-        $expense = new Expense($id, $userId, $date, $category, (int)($amount * 100), $description);
+        $expense = new Expense($id, $userId, $date, $category, $amount, $description);
         $this->expenses->update($expense);
 
         $this->logger->info("[EXPENSE UPDATE] Expense $id updated");

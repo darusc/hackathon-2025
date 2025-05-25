@@ -32,7 +32,7 @@
             <div class="mb-4 flex items-center">
                 <label for="amount" class="w-24 text-gray-300 font-bold">Amount:</label>
                 <div class="w-96 flex flex-col">
-                    <input type="number" id="amount" name="amount" step="0.01" required value="{{ expense.amountCents / 100 | number_format(2) }}"
+                    <input type="number" id="amount" name="amount" step="0.01" required value="{{ expense.amount | number_format(2) }}"
                            class="flex-1 shadow appearance-none border rounded py-2 px-3 bg-gray-700 text-gray-100 leading-tight focus:outline-none focus:shadow-outline">
                     {% if errors[2] %}
                         <span class="text-red-500">{{ errors[2] }}</span>
