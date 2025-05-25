@@ -85,12 +85,51 @@
 
         {# Listing pagination #}
         <div class="mt-1 flex justify-center">{{ min(page * pageSize, total) }} of {{ total }} item(s)</div>
-        <div class="mt-1 flex justify-between">
+        <div class="mt-1 flex items-center justify-between">
             {% if total and page > 1 %}
                 <a href="{{ previousPageUrl }}" class="text-blue-500 hover:text-blue-400">Previous</a>
-            {% else %}
-                <span></span>
             {% endif %}
+
+            {# Page links 1 ... k-1 k k+1 ... n                               #}
+            {# Where k is the current page and n is the number of total pages #}
+            <nav class="flex justify-center flex-grow items-center mt-4">
+                <ul class="inline-flex items-center space-x-1 text-sm">
+                    <li>
+                        <a href="{{ pageurls[0] }}"
+                           class="px-3 py-1 rounded {{ currentPage == 1 ? 'bg-blue-500 text-white' : 'hover:bg-gray-200' }}">
+                            1
+                        </a>
+                    </li>
+
+                    {% if currentPage >= 4 %}
+                        <li><span class="px-2">...</span></li>
+                    {% endif %}
+
+                    {% for i in (currentPage - 1)..(currentPage + 1) %}
+                        {% if i > 1 and i < totalPages %}
+                            <li>
+                                <a href="{{ pageurls[i - 1] }}"
+                                   class="px-3 py-1 rounded {{ currentPage == i ? 'bg-blue-500 text-white' : 'hover:bg-gray-200' }}">
+                                    {{ i }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if currentPage <= totalPages - 3 %}
+                        <li><span class="px-2">...</span></li>
+                    {% endif %}
+
+                    {% if totalPages > 1 %}
+                        <li>
+                            <a href="{{ pageurls[totalPages - 1] }}"
+                               class="px-3 py-1 rounded {{ currentPage == totalPages ? 'bg-blue-500 text-white' : 'hover:bg-gray-200' }}">
+                                {{ totalPages }}
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
 
             {% if min(page * pageSize, total) < total  %}
                 <a href="{{ nextPageUrl }}" class="text-blue-500 hover:text-blue-400">Next</a>

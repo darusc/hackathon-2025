@@ -38,11 +38,20 @@ class ExpenseController extends BaseController
 
         $count = $this->expenseService->count(['user_id' => $userId, 'year' => $year, 'month' => $month]);
 
+        // If a flash message needs to be shown the values are
+        // set in $_SESSION, otherwise make them null to avoid
+        // rendering the corresponding HTML components
         $importedRows = $_SESSION['importedRows'] ?? null;
         unset($_SESSION['importedRows']);
-
         $expenseDestroyed = $_SESSION['expenseDestroyed'] ?? null;
         unset($_SESSION['expenseDestroyed']);
+
+        // Build the page urls for the 1 2 3 ... N page links
+        $pageurls = [];
+        $totalPages = (int)ceil($count / $pageSize);
+        for ($i = 1; $i <= $totalPages; $i++) {
+            $pageurls[] = $this->buildPageUrl($i);
+        }
 
         return $this->render($response, 'expenses/index.twig', [
             'expenses' => $expenses,
@@ -57,6 +66,9 @@ class ExpenseController extends BaseController
             'previousPageUrl' => $this->buildPageUrl($page - 1),
             'importedRows' => $importedRows,
             'expenseDestroyed' => $expenseDestroyed,
+            'currentPage' => $page,
+            'totalPages' => (int)ceil($count / $pageSize),
+            'pageurls' => $pageurls,
         ]);
     }
 
