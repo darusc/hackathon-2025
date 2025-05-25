@@ -9,11 +9,11 @@ use DateTimeImmutable;
 final class Expense
 {
     public function __construct(
-        public ?int $id,
-        public int $userId,
-        public DateTimeImmutable $date,
-        public string $category,
-        public float $amount,
-        public string $description,
+        public readonly ?int $id,
+        public readonly int $userId,
+        public readonly DateTimeImmutable $date,
+        public readonly string $category,
+        public readonly float $amount,
+        public readonly string $description,
     ) {}
 }

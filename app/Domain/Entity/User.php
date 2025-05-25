@@ -9,9 +9,9 @@ use DateTimeImmutable;
 final class User
 {
     public function __construct(
-        public ?int $id,
-        public string $username,
-        public string $passwordHash,
-        public DateTimeImmutable $createdAt,
+        public readonly ?int $id,
+        public readonly string $username,
+        public readonly string $passwordHash,
+        public readonly DateTimeImmutable $createdAt,
     ) {}
 }
