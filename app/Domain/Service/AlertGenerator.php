@@ -10,13 +10,14 @@ class AlertGenerator
 
     public function __construct(
         private readonly MonthlySummaryService $summaryService,
-    ) {
+    )
+    {
 
         $categories = explode(",", $_ENV['CATEGORIES']);
         $budgets = explode(",", $_ENV['BUDGETS']);
 
         $count = count($categories);
-        for($i = 0; $i < $count; $i++) {
+        for ($i = 0; $i < $count; $i++) {
             $this->categoryBudgets[$categories[$i]] = $budgets[$i];
         }
     }
@@ -29,7 +30,7 @@ class AlertGenerator
         foreach ($totalPerCategory as $category => $data) {
             $value = $data['value'];
             $budget = (float)$this->categoryBudgets[$category];
-            if($value > $budget) {
+            if ($value > $budget) {
                 $alerts[$category] = $value - $budget;
             }
         }

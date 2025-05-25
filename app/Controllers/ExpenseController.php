@@ -18,10 +18,11 @@ class ExpenseController extends BaseController
     private const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     public function __construct(
-        Twig $view,
-        private readonly ExpenseService $expenseService,
+        Twig                             $view,
+        private readonly ExpenseService  $expenseService,
         private readonly LoggerInterface $logger
-    ) {
+    )
+    {
         parent::__construct($view);
     }
 
@@ -56,7 +57,7 @@ class ExpenseController extends BaseController
 
         return $this->render($response, 'expenses/index.twig', [
             'expenses' => $expenses,
-            'page'     => $page,
+            'page' => $page,
             'pageSize' => $pageSize,
             'years' => $years,
             'months' => self::MONTHS,
@@ -93,7 +94,7 @@ class ExpenseController extends BaseController
         $date = new DateTimeImmutable($body['date']) ?: new DateTimeImmutable();
 
         $result = $this->expenseService->create($userId, (float)$amount, $description, $date, $category);
-        if(is_bool($result) && $result) {
+        if (is_bool($result) && $result) {
             return $response->withHeader('Location', '/expenses')->withStatus(302);
         } else {
             // Prefill the create page with previous data
@@ -115,13 +116,13 @@ class ExpenseController extends BaseController
         $expenseId = $routeParams['id'];
         $expense = $this->expenseService->findById((int)$expenseId);
 
-        if($expense == null) {
+        if ($expense == null) {
             $this->logger->info("[EXPENSE EDIT] Expense '$expenseId' not found");
             return $response->withStatus(404);
         }
 
         // Check if the logged-in user is the owner of the edited expense
-        if($expense->userId != $_SESSION['user_id']) {
+        if ($expense->userId != $_SESSION['user_id']) {
             $this->logger->info("[EXPENSE EDIT] User '{$_SESSION['user_id']}' does not have permission to edit this expense");
             return $response->withStatus(403);
         }
@@ -142,13 +143,13 @@ class ExpenseController extends BaseController
         $expense = $this->expenseService->findById((int)$expenseId);
 
         // Check if the expense exists
-        if($expense == null) {
+        if ($expense == null) {
             $this->logger->info("[EXPENSE EDIT] Expense '$expenseId' not found");
             return $response->withStatus(404);
         }
 
         // Check if the current user owns the expense to be deleted
-        if($expense->userId != $userId) {
+        if ($expense->userId != $userId) {
             $this->logger->info("[EXPENSE EDIT] User '$userId' does not have permission to edit this expense");
             return $response->withStatus(403);
         }
@@ -161,7 +162,7 @@ class ExpenseController extends BaseController
         $date = new DateTimeImmutable($body['date']) ?: new DateTimeImmutable();
 
         $result = $this->expenseService->update((int)$expenseId, $userId, (float)$amount, $description, $date, $category);
-        if(is_bool($result) && $result) {
+        if (is_bool($result) && $result) {
             return $response->withHeader('Location', '/expenses')->withStatus(302);
         } else {
             $_SESSION['expenseEditErrors'] = $result;
@@ -177,13 +178,13 @@ class ExpenseController extends BaseController
         $expense = $this->expenseService->findById((int)$expenseId);
 
         // Check if the expense exists
-        if($expense == null) {
+        if ($expense == null) {
             $this->logger->info("[EXPENSE DELETE] Expense '$expenseId' not found");
             return $response->withStatus(404);
         }
 
         // Check if the current user owns the expense to be deleted
-        if($expense->userId != $userId) {
+        if ($expense->userId != $userId) {
             $this->logger->info("[EXPENSE DELETE] User '$userId' does not have permission to delete this expense");
             return $response->withStatus(403);
         }
@@ -202,13 +203,13 @@ class ExpenseController extends BaseController
     {
         $files = $request->getUploadedFiles();
 
-        if(empty($files['csv'])) {
+        if (empty($files['csv'])) {
             $this->logger->info("[EXPENSE LOAD CSV] No file uploaded");
             return $response->withHeader('Location', '/expenses')->withStatus(302);
         }
 
         $csvfile = $files['csv'];
-        if($csvfile->getError() != UPLOAD_ERR_OK) {
+        if ($csvfile->getError() != UPLOAD_ERR_OK) {
             $this->logger->info("[EXPENSE LOAD CSV] File upload error");
             return $response->withHeader('Location', '/expenses')->withStatus(302);
         }
@@ -224,11 +225,12 @@ class ExpenseController extends BaseController
      * Build the url for the given page.
      * Takes into account existing query params.
      */
-    private function buildPageUrl(int $page): string {
+    private function buildPageUrl(int $page): string
+    {
         $params = $_GET;
         $baseurl = strtok($_SERVER['REQUEST_URI'], "?");
-
         $params['page'] = $page;
+        
         return $baseurl . '?' . http_build_query($params);
     }
 }

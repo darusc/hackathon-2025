@@ -21,8 +21,10 @@ class AuthService
 
     public function __construct(
         private readonly UserRepositoryInterface $users,
-        private readonly LoggerInterface $logger,
-    ) {}
+        private readonly LoggerInterface         $logger,
+    )
+    {
+    }
 
     /**
      * Register a new user with the given username and password.
@@ -30,7 +32,7 @@ class AuthService
      * field (username, password, passwordConfirmation)
      * Or true if there register was successful
      */
-    public function register(string $username, string $password, string $passwordConfirm): array | bool
+    public function register(string $username, string $password, string $passwordConfirm): array|bool
     {
         $errors = [self::SUCCESS, self::SUCCESS, self::SUCCESS];
 
@@ -45,21 +47,21 @@ class AuthService
         // Validate the given username and password for registering.
         // Username criteria: length >= 4 characters
         // Password criteria: length >= 8 characters + at least 1 number
-        if(strlen($username) < 4){
+        if (strlen($username) < 4) {
             $errors[0] = self::USERNAME_TOO_SHORT;
         }
-        if(strlen($password) < 8){
+        if (strlen($password) < 8) {
             $errors[1] = self::PASSWORD_TOO_SHORT;
         }
         // Check if password contains at least 1 number
-        if(!preg_match("/\d/", $password)){
+        if (!preg_match("/\d/", $password)) {
             $errors[1] = self::PASSWORD_NO_NUMBER;
         }
-        if(strcmp($password, $passwordConfirm) != 0){
+        if (strcmp($password, $passwordConfirm) != 0) {
             $errors[2] = self::PASSWORD_NO_MATCH;
         }
 
-        if($errors[0] != null || $errors[1] != null || $errors[2] != null) {
+        if ($errors[0] != null || $errors[1] != null || $errors[2] != null) {
             $this->logger->alert("[REGISTER] Credentials are invalid. ($errors[0], $errors[1], $errors[2]);");
             return $errors;
         }
@@ -80,16 +82,16 @@ class AuthService
      * If login is successful returns true otherwise returns a string
      * representing the encountered error.
      */
-    public function attempt(string $username, string $password): string | bool
+    public function attempt(string $username, string $password): string|bool
     {
         // Check if the username exists
         $user = $this->users->findByUsername($username);
-        if($user == null) {
+        if ($user == null) {
             $this->logger->alert("[LOGIN] User '$username' does not exist");
             return self::INVALID_USERNAME_PASSWORD;
         }
 
-        if(password_verify($password, $user->passwordHash)) {
+        if (password_verify($password, $user->passwordHash)) {
             $this->logger->alert("[LOGIN] User '$username' has been authenticated");
 
             // Start new session and store user data

@@ -14,10 +14,11 @@ use Slim\Views\Twig;
 class AuthController extends BaseController
 {
     public function __construct(
-        Twig $view,
-        private readonly AuthService $authService,
+        Twig                             $view,
+        private readonly AuthService     $authService,
         private readonly LoggerInterface $logger,
-    ) {
+    )
+    {
         parent::__construct($view);
     }
 
@@ -53,13 +54,13 @@ class AuthController extends BaseController
         $csrfToken = $params['csrftoken'];
 
         // Terminate immediately if the CSRF token doesn't match the generated one
-        if(!isset($_SESSION['csrfToken']) || $csrfToken !== $_SESSION['csrfToken']){
+        if (!isset($_SESSION['csrfToken']) || $csrfToken !== $_SESSION['csrfToken']) {
             $this->logger->alert("[REGISTER] CSRF Failed");
             return $response->withHeader('Location', '/register')->withStatus(302);
         }
 
         $result = $this->authService->register($username, $password, $passwordConfirm);
-        if(is_bool($result) && $result){
+        if (is_bool($result) && $result) {
             return $response->withHeader('Location', '/login')->withStatus(302);
         } else {
             // Pass the register error and the credentials to the register view through $_SESSION
@@ -95,13 +96,13 @@ class AuthController extends BaseController
         $csrfToken = $params['csrftoken'];
 
         // Terminate immediately if the CSRF token doesn't match the generated one
-        if(!isset($_SESSION['csrfToken']) || $csrfToken !== $_SESSION['csrfToken']){
+        if (!isset($_SESSION['csrfToken']) || $csrfToken !== $_SESSION['csrfToken']) {
             $this->logger->alert("[LOGIN] CSRF Failed");
             return $response->withHeader('Location', '/login')->withStatus(302);
         }
 
         $result = $this->authService->attempt($username, $password);
-        if(is_bool($result) && $result){
+        if (is_bool($result) && $result) {
             // Regenerate the session id and remove the old one to prevent session fixation attacks
             session_regenerate_id(true);
             return $response->withHeader('Location', '/')->withStatus(302);
@@ -118,6 +119,7 @@ class AuthController extends BaseController
     {
         session_unset();
         session_destroy();
+
         return $response->withHeader('Location', '/login')->withStatus(302);
     }
 }

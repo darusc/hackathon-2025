@@ -21,10 +21,13 @@ class ExpenseService
 
     public function __construct(
         private readonly ExpenseRepositoryInterface $expenses,
-        private readonly LoggerInterface $logger
-    ) {}
+        private readonly LoggerInterface            $logger
+    )
+    {
+    }
 
-    public function findById(int $id): Expense|null {
+    public function findById(int $id): Expense|null
+    {
         return $this->expenses->find($id);
     }
 
@@ -37,11 +40,13 @@ class ExpenseService
         );
     }
 
-    public function listExpenditureYears(int $userId): array {
+    public function listExpenditureYears(int $userId): array
+    {
         return $this->expenses->listExpenditureYears($userId);
     }
 
-    public function count(array $criteria): int {
+    public function count(array $criteria): int
+    {
         return $this->expenses->countBy($criteria);
     }
 
@@ -50,16 +55,17 @@ class ExpenseService
      * or true if create succeeded
      */
     public function create(
-        int $userId,
-        float $amount,
-        string $description,
+        int               $userId,
+        float             $amount,
+        string            $description,
         DateTimeImmutable $date,
-        string $category,
-    ): array|bool {
+        string            $category,
+    ): array|bool
+    {
         $errors = [null, null, null, null];
 
         $result = $this->validateData($date, $category, $amount, $description, $errors);
-        if(!$result) {
+        if (!$result) {
             $this->logger->info("Expense create failed.");
             return $errors;
         }
@@ -77,17 +83,18 @@ class ExpenseService
      * or true if create succeeded
      */
     public function update(
-        int $id,
-        int $userId,
-        float $amount,
-        string $description,
+        int               $id,
+        int               $userId,
+        float             $amount,
+        string            $description,
         DateTimeImmutable $date,
-        string $category,
-    ): array|bool {
+        string            $category,
+    ): array|bool
+    {
         $errors = [null, null, null, null];
 
         $result = $this->validateData($date, $category, $amount, $description, $errors);
-        if(!$result) {
+        if (!$result) {
             $this->logger->info("[EXPENSE UPDATE] Expense $id update failed.");
             return $errors;
         }
@@ -100,7 +107,8 @@ class ExpenseService
         return true;
     }
 
-    public function delete(int $id): void {
+    public function delete(int $id): void
+    {
         $this->expenses->delete($id);
     }
 
@@ -118,17 +126,17 @@ class ExpenseService
         $visited = [];
 
         // Open the temporary file and read its content
-        if(($handle = fopen($tmpPath, "r")) !== FALSE) {
+        if (($handle = fopen($tmpPath, "r")) !== FALSE) {
             $categories = explode(",", $_ENV['CATEGORIES']);
-            while(($data = fgetcsv($handle, 1000)) !== FALSE) {
-                if(!in_array($data[3], $categories)) {
+            while (($data = fgetcsv($handle, 1000)) !== FALSE) {
+                if (!in_array($data[3], $categories)) {
                     $this->logger->info("[EXPENSE IMPORT] Skip row. Unknown category $data[3].");
                     continue;
                 }
 
                 // Generate a unique key for each row by trimming all white spaces and
                 $key = implode('|', array_map('trim', $data));
-                if(isset($visited[$key])) {
+                if (isset($visited[$key])) {
                     // Skip current row if it is a duplicate
                     $this->logger->info("[EXPENSE IMPORT] Skip row. Duplicate $key.");
                     continue;
@@ -145,6 +153,7 @@ class ExpenseService
         unlink($tmpPath);
 
         $this->expenses->saveImported($expenses);
+
         return $rows; // number of imported rows
     }
 
@@ -158,28 +167,30 @@ class ExpenseService
      * Returns true if all criteria is met, false otherwise.
      * Sets the $errors param accordingly => [date, category, amount, description].
      */
-    private function validateData(DateTimeImmutable $date, string $category, float $amount, string $description, array &$errors): bool {
-        if($date > new DateTimeImmutable()) {
-           $errors[0] = self::ERROR_DATE;
+    private function validateData(DateTimeImmutable $date, string $category, float $amount, string $description, array &$errors): bool
+    {
+        if ($date > new DateTimeImmutable()) {
+            $errors[0] = self::ERROR_DATE;
         }
 
-        if($category === "Select a category") {
+        if ($category === "Select a category") {
             $errors[1] = self::ERROR_CATEGORY;
         }
 
-        if($amount <= 0) {
+        if ($amount <= 0) {
             $errors[2] = self::ERROR_AMOUNT;
         }
 
-        if(strlen($description) == 0) {
+        if (strlen($description) == 0) {
             $errors[3] = self::ERROR_DESCRIPTION;
         }
 
-        foreach($errors as $error) {
-            if($error != null) {
+        foreach ($errors as $error) {
+            if ($error != null) {
                 return false;
             }
         }
+        
         return true;
     }
 }

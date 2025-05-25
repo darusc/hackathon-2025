@@ -15,9 +15,11 @@ use Psr\Log\LoggerInterface;
 class PdoExpenseRepository implements ExpenseRepositoryInterface
 {
     public function __construct(
-        private readonly PDO $pdo,
+        private readonly PDO             $pdo,
         private readonly LoggerInterface $logger
-    ) {}
+    )
+    {
+    }
 
     /**
      * @throws Exception
@@ -114,7 +116,7 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
 
         $data = $statement->fetchAll();
 
-        return array_map(function($entry) {
+        return array_map(function ($entry) {
             return $this->createExpenseFromData($entry);
         }, $data);
     }
@@ -125,11 +127,11 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
         $query = 'SELECT COUNT(*) FROM expenses WHERE user_id = :user_id';
         $params = ['user_id' => $criteria['user_id']];
 
-        if(array_key_exists('year', $criteria)) {
+        if (array_key_exists('year', $criteria)) {
             $query .= ' AND strftime("%Y", date) = :year';
             $params['year'] = $criteria['year'];
         }
-        if(array_key_exists('month', $criteria)) {
+        if (array_key_exists('month', $criteria)) {
             $query .= ' AND strftime("%m", date) = :month';
             $params['month'] = str_pad((string)$criteria['month'], 2, '0', STR_PAD_LEFT);
         }
@@ -151,7 +153,7 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
 
         $data = $statement->fetchAll();
 
-        return array_map(function($entry) {
+        return array_map(function ($entry) {
             return (int)$entry['year'];
         }, $data);
     }

@@ -17,10 +17,11 @@ class DashboardController extends BaseController
     private AlertGenerator $alertGenerator;
 
     public function __construct(
-        Twig $view,
+        Twig                                   $view,
         private readonly ExpenseService        $expenseService,
         private readonly MonthlySummaryService $summaryService,
-    ) {
+    )
+    {
         parent::__construct($view);
         $this->alertGenerator = new AlertGenerator($summaryService);
     }
@@ -45,8 +46,8 @@ class DashboardController extends BaseController
             'selectedMonth' => $month,
             'selectedYear' => $year,
             'totalExpenditure' => $totalExpenditure,
-            'alerts'                => $alerts,
-            'totalsForCategories'   => $totalsForCategories,
+            'alerts' => $alerts,
+            'totalsForCategories' => $totalsForCategories,
             'averagesForCategories' => $averageForCategories
         ]);
     }
