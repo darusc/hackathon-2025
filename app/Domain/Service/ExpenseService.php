@@ -135,7 +135,7 @@ class ExpenseService
                 }
                 $visited[$key] = true;
                 $rows++;
-                $expense = new Expense(null, $userId, new DateTimeImmutable($data[0]), $data[3], (int)$data[1] * 100, $data[2]);
+                $expense = new Expense(null, $userId, new DateTimeImmutable($data[0]), $data[3], (float)$data[1], $data[2]);
                 $expenses[] = $expense;
             }
             fclose($handle);

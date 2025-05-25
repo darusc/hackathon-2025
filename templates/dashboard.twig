@@ -40,7 +40,7 @@
         <div class="mt-6">
             <h3 class="text-lg font-bold mb-2">Total expenditure</h3>
             <div class="bg-gray-800 rounded-lg p-6">
-                <div class="text-4xl font-bold text-green-400 mb-2">{{ totalExpenditure / 100 | number_format(2) }} €</div>
+                <div class="text-4xl font-bold text-green-400 mb-2">{{ totalExpenditure | number_format(2) }} €</div>
                 <div class="text-gray-400">for month {{ selectedMonth }} of year 2025</div>
             </div>
         </div>
@@ -56,7 +56,7 @@
                     <div class="relative">
                         <div class="bg-{{ colors[loop.index0 % colors|length] }}-600 h-8 rounded"
                              style="width: {{ data.percentage }}%">
-                            <span class="absolute inset-0 flex items-center justify-start pl-4 text-white font-bold">{{ category }}: {{ data.value / 100 | number_format(2) }} €</span>
+                            <span class="absolute inset-0 flex items-center justify-start pl-4 text-white font-bold">{{ category }}: {{ data.value | number_format(2) }} €</span>
                         </div>
                     </div>
                 {% endfor %}
@@ -69,7 +69,7 @@
                 {% for category,data in averagesForCategories  %}
                     <div class="relative">
                         <div class="bg-{{ colors[loop.index0 % colors|length] }}-600 h-8 rounded" style="width: {{ data.percentage }}%">
-                            <span class="absolute inset-0 flex items-center justify-start pl-4 text-white font-bold">{{ category }}: {{ data.value / 100 | number_format(2) }} €</span>
+                            <span class="absolute inset-0 flex items-center justify-start pl-4 text-white font-bold">{{ category }}: {{ data.value | number_format(2) }} €</span>
                         </div>
                     </div>
                 {% endfor %}

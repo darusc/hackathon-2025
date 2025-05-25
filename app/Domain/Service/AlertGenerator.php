@@ -27,7 +27,7 @@ class AlertGenerator
 
         $totalPerCategory = $this->summaryService->computePerCategoryTotals($userId, $year, $month);
         foreach ($totalPerCategory as $category => $data) {
-            $value = $data['value'] / 100;
+            $value = $data['value'];
             $budget = (float)$this->categoryBudgets[$category];
             if($value > $budget) {
                 $alerts[$category] = $value - $budget;
